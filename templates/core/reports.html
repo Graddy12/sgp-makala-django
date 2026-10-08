@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Rapports — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold font-outfit mb-1">Rapports Statistiques</h1>
+        <p class="text-muted mb-0">Synthèse de la population carcérale</p>
+    </div>
+    <a href="{% url 'core:reports_pdf' %}" target="_blank" class="btn btn-danger rounded-3"><i class="bi bi-file-earmark-pdf me-1"></i> PDF</a>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card p-3 shadow-sm border-0"><div class="text-muted small">Total</div><div class="h3 fw-bold">{{ total }}</div></div></div>
+    <div class="col-md-3"><div class="card p-3 shadow-sm border-0"><div class="text-muted small">Prévenus</div><div class="h3 fw-bold">{{ prevenus }}</div></div></div>
+    <div class="col-md-3"><div class="card p-3 shadow-sm border-0"><div class="text-muted small">Condamnés</div><div class="h3 fw-bold">{{ condamnes }}</div></div></div>
+    <div class="col-md-3"><div class="card p-3 shadow-sm border-0"><div class="text-muted small">Libérés</div><div class="h3 fw-bold">{{ liberes }}</div></div></div>
+</div>
+<div class="card shadow-sm border-0">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead><tr><th>Statut</th><th>Effectif</th></tr></thead>
+            <tbody>
+            {% for row in by_statut %}
+            <tr><td>{{ row.statut_judiciaire }}</td><td>{{ row.total }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

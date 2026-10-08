@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Nouvelle cellule — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm p-4 rounded-4" style="max-width:640px;">
+    <h1 class="h4 fw-bold mb-3">Nouvelle cellule</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Code *</label><input name="code_cellule" class="form-control" placeholder="PAV1-BLOC-A-C01" required></div>
+            <div class="col-md-6"><label class="form-label">Pavillon *</label><input name="pavillon" class="form-control" required></div>
+            <div class="col-md-6"><label class="form-label">Bloc *</label><input name="bloc" class="form-control" required></div>
+            <div class="col-md-3"><label class="form-label">Capacité</label><input type="number" name="capacite_max" class="form-control" value="10" min="1"></div>
+            <div class="col-md-3"><label class="form-label">Statut</label>
+                <select name="statut" class="form-select">
+                    {% for v,l in StatutCellule.choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-12"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="2"></textarea></div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-primary">Enregistrer</button>
+            <a href="{% url 'prison:cellules' %}" class="btn btn-outline-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

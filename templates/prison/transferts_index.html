@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Transferts — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-4">
+    <h1 class="h3 fw-bold font-outfit mb-0">Transferts</h1>
+    {% if user.can_write_transferts %}
+    <a href="{% url 'prison:transferts_create' %}" class="btn btn-primary rounded-3">Planifier</a>
+    {% endif %}
+</div>
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th>Détenu</th><th>Destination</th><th>Date</th><th>Statut</th><th></th></tr></thead>
+            <tbody>
+            {% for t in transferts %}
+            <tr>
+                <td><a href="{% url 'prison:detenus_show' t.detenu_id %}">{{ t.detenu.matricule }}</a></td>
+                <td>{{ t.etablissement_destination }}</td>
+                <td>{{ t.date_transfert|date:"d/m/Y" }}</td>
+                <td>{{ t.get_statut_display }}</td>
+                <td>
+                    {% if user.can_write_transferts and t.statut != 'effectue' and t.statut != 'annule' %}
+                    <form method="post" action="{% url 'prison:transferts_status' t.pk %}" class="d-flex gap-1">
+                        {% csrf_token %}
+                        <select name="statut" class="form-select form-select-sm">
+                            {% for v,l in StatutTransfert.choices %}<option value="{{ v }}" {% if t.statut == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+                        </select>
+                        <button class="btn btn-sm btn-outline-primary">OK</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">Aucun transfert</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}{{ detenu.matricule }} — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="h3 fw-bold font-outfit mb-1">{{ detenu.full_name }}</h1>
+        <p class="mb-2"><code>{{ detenu.matricule }}</code>
+            <span class="badge {{ detenu.badge_statut }} ms-2">{{ detenu.get_statut_judiciaire_display }}</span>
+            <span class="badge {{ detenu.badge_danger }}">{{ detenu.get_niveau_dangerosite_display }}</span>
+        </p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'prison:detenus_print' detenu.pk %}" target="_blank" class="btn btn-outline-danger btn-sm"><i class="bi bi-file-pdf"></i> Fiche PDF</a>
+        {% if user.can_write_detenus %}
+        <a href="{% url 'prison:detenus_edit' detenu.pk %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i> Modifier</a>
+        <a href="{% url 'prison:jugements_create' %}?detenu_id={{ detenu.pk }}" class="btn btn-outline-secondary btn-sm">Jugement</a>
+        <a href="{% url 'prison:visites_create' %}?detenu_id={{ detenu.pk }}" class="btn btn-outline-secondary btn-sm">Visite</a>
+        {% if detenu.statut_judiciaire != 'archive' %}
+        <form method="post" action="{% url 'prison:detenus_archive' detenu.pk %}" onsubmit="return confirm('Archiver ce dossier ?');">{% csrf_token %}
+            <button class="btn btn-outline-dark btn-sm">Archiver</button>
+        </form>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <h2 class="h6 fw-bold mb-3">Identité</h2>
+            <div class="row g-2 small">
+                <div class="col-sm-6"><strong>Naissance :</strong> {{ detenu.date_naissance|date:"d/m/Y" }} — {{ detenu.lieu_naissance }}</div>
+                <div class="col-sm-6"><strong>Genre :</strong> {{ detenu.get_genre_display }}</div>
+                <div class="col-sm-6"><strong>Nationalité :</strong> {{ detenu.nationalite }}</div>
+                <div class="col-sm-6"><strong>État civil :</strong> {{ detenu.get_etat_civil_display }}</div>
+                <div class="col-sm-6"><strong>Cellule :</strong> {{ detenu.cellule.code_cellule|default:"—" }}</div>
+                <div class="col-sm-6"><strong>Écrou :</strong> {{ detenu.date_ecrou|date:"d/m/Y H:i" }}</div>
+                <div class="col-12"><strong>Motif :</strong> {{ detenu.motif_inculpation }}</div>
+                {% if detenu.date_liberation_prevue %}<div class="col-sm-6"><strong>Libération prévue :</strong> {{ detenu.date_liberation_prevue|date:"d/m/Y" }}</div>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+            {% if detenu.photo and detenu.photo != 'default_detenu.png' %}
+            <img src="{% url 'core:media_photo' detenu.photo %}" alt="Photo" class="img-fluid rounded-3 mb-2" style="max-height:220px;object-fit:cover;">
+            {% else %}
+            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center mb-2" style="height:180px;"><i class="bi bi-person display-3 text-muted"></i></div>
+            {% endif %}
+            <div class="small text-muted">Enregistré par {{ detenu.created_by.full_name }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white"><strong>Jugements</strong></div>
+            <ul class="list-group list-group-flush">
+                {% for j in jugements %}
+                <li class="list-group-item small"><strong>{{ j.numero_dossier }}</strong> — {{ j.get_type_decision_display }} ({{ j.date_jugement|date:"d/m/Y" }})</li>
+                {% empty %}<li class="list-group-item text-muted small">Aucun</li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white"><strong>Documents</strong></div>
+            <ul class="list-group list-group-flush">
+                {% for doc in documents %}
+                <li class="list-group-item small d-flex justify-content-between">
+                    <span>{{ doc.titre }} <span class="badge bg-secondary">{{ doc.get_type_doc_display }}</span></span>
+                    <a href="{% url 'core:media_document' doc.fichier_path %}">Télécharger</a>
+                </li>
+                {% empty %}<li class="list-group-item text-muted small">Aucun</li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white"><strong>Visites</strong></div>
+            <ul class="list-group list-group-flush">
+                {% for v in visites %}
+                <li class="list-group-item small">{{ v.visiteur_full_name }} — {{ v.date_visite|date:"d/m/Y" }} ({{ v.get_statut_display }})</li>
+                {% empty %}<li class="list-group-item text-muted small">Aucune</li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white"><strong>Transferts</strong></div>
+            <ul class="list-group list-group-flush">
+                {% for t in transferts %}
+                <li class="list-group-item small">→ {{ t.etablissement_destination }} — {{ t.get_statut_display }}</li>
+                {% empty %}<li class="list-group-item text-muted small">Aucun</li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Connexion - {{ APP_NAME }}{% endblock %}
+{% block auth_content %}
+<div class="container" style="max-width: 440px;">
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-body">
+        <div class="card-header text-white text-center p-4 border-0" style="background: linear-gradient(135deg, #0B2545 0%, #134074 100%) !important;">
+            <div class="bg-white text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow" style="width: 64px; height: 64px;">
+                <i class="bi bi-building-lock fs-2"></i>
+            </div>
+            <h1 class="h4 fw-bold font-outfit text-white mb-1">PRISON CENTRALE DE MAKALA</h1>
+            <p class="small text-white-50 mb-0">Système Numérique de Gestion Pénitentiaire</p>
+        </div>
+        <div class="card-body p-4 p-md-5">
+            {% include 'partials/messages.html' %}
+            <form method="post" action="{% url 'accounts:login' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="email" class="form-label fw-semibold small text-secondary">Adresse Email Officielle</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-body-tertiary border-end-0 text-muted"><i class="bi bi-envelope"></i></span>
+                        <input type="email" class="form-control bg-body-tertiary border-start-0" id="email" name="email" placeholder="nom@makala.cd" required autofocus>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="form-label fw-semibold small text-secondary">Mot de passe</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-body-tertiary border-end-0 text-muted"><i class="bi bi-lock"></i></span>
+                        <input type="password" class="form-control bg-body-tertiary border-start-0" id="password" name="password" placeholder="••••••••" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2 rounded-3 fw-bold text-uppercase shadow-sm mb-3">
+                    <i class="bi bi-box-arrow-in-right me-2"></i> Se Connecter
+                </button>
+            </form>
+        </div>
+        <div class="card-footer bg-body-tertiary text-center py-3 border-0">
+            <small class="text-muted">&copy; {% now "Y" %} République Démocratique du Congo</small>
+        </div>
+    </div>
+</div>
+<style>body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#F8FAFC;}</style>
+{% endblock %}

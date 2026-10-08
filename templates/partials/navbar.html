@@ -1,0 +1,17 @@
+<header class="navbar d-flex align-items-center justify-content-between px-3 px-md-4">
+    <div class="d-flex align-items-center gap-3">
+        <button type="button" id="sidebarToggle" class="btn btn-light btn-sm border d-lg-none" aria-label="Menu">
+            <i class="bi bi-list fs-5"></i>
+        </button>
+        <div>
+            <div class="fw-semibold text-dark small mb-0">{% block page_title %}{{ PRISON_NAME }}{% endblock %}</div>
+            <div class="text-muted" style="font-size:0.72rem;">{% now "d/m/Y H:i" %}</div>
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        {% if sgp_unread_count %}
+        <span class="badge bg-danger rounded-pill">{{ sgp_unread_count }}</span>
+        {% endif %}
+        <span class="badge {{ user.role_badge }}">{{ user.role_label }}</span>
+    </div>
+</header>

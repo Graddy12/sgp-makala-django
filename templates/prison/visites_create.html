@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Nouvelle visite — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm p-4 rounded-4" style="max-width:720px;">
+    <h1 class="h4 fw-bold mb-3">Enregistrer une visite</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-12"><label class="form-label">Détenu *</label>
+                <select name="detenu_id" class="form-select" required>
+                    <option value="">— Sélectionner —</option>
+                    {% for d in detenus %}
+                    <option value="{{ d.id }}" {% if selected_detenu and selected_detenu.id == d.id %}selected{% endif %}>{{ d.matricule }} — {{ d.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6"><label class="form-label">Nom visiteur *</label><input name="nom_visiteur" class="form-control" required></div>
+            <div class="col-md-6"><label class="form-label">Prénom visiteur *</label><input name="prenom_visiteur" class="form-control" required></div>
+            <div class="col-md-4"><label class="form-label">Lien *</label><input name="lien_parente" class="form-control" placeholder="Époux, Frère, Avocat…" required></div>
+            <div class="col-md-4"><label class="form-label">Type pièce</label><input name="type_piece_identite" class="form-control" value="Carte d'Électeur"></div>
+            <div class="col-md-4"><label class="form-label">N° pièce *</label><input name="numero_piece" class="form-control" required></div>
+            <div class="col-md-4"><label class="form-label">Téléphone</label><input name="telephone" class="form-control"></div>
+            <div class="col-md-4"><label class="form-label">Date *</label><input type="date" name="date_visite" class="form-control" required></div>
+            <div class="col-md-4"><label class="form-label">Heure début *</label><input type="time" name="heure_debut" class="form-control" required></div>
+            <div class="col-md-6"><label class="form-label">Objet</label><input name="objet_visite" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label">Effets apportés</label><input name="effets_apportes" class="form-control"></div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-primary">Enregistrer</button>
+            <a href="{% url 'prison:visites' %}" class="btn btn-outline-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

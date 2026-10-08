@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Nouveau transfert — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm p-4 rounded-4" style="max-width:720px;">
+    <h1 class="h4 fw-bold mb-3">Planifier un transfert</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-12"><label class="form-label">Détenu *</label>
+                <select name="detenu_id" class="form-select" required>
+                    <option value="">— Sélectionner —</option>
+                    {% for d in detenus %}<option value="{{ d.id }}">{{ d.matricule }} — {{ d.full_name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6"><label class="form-label">Provenance</label><input name="etablissement_provenance" class="form-control" value="Prison Centrale de Makala"></div>
+            <div class="col-md-6"><label class="form-label">Destination *</label><input name="etablissement_destination" class="form-control" required></div>
+            <div class="col-md-6"><label class="form-label">Date *</label><input type="date" name="date_transfert" class="form-control" required></div>
+            <div class="col-md-6"><label class="form-label">Escorte</label><input name="escorte_agents" class="form-control"></div>
+            <div class="col-12"><label class="form-label">Motif *</label><textarea name="motif_transfert" class="form-control" rows="2" required></textarea></div>
+            <div class="col-12"><label class="form-label">Notes</label><textarea name="notes" class="form-control" rows="2"></textarea></div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-primary">Enregistrer</button>
+            <a href="{% url 'prison:transferts' %}" class="btn btn-outline-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

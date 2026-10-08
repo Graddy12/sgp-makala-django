@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Accès refusé{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+    <i class="bi bi-shield-lock display-1 text-danger"></i>
+    <h1 class="h3 fw-bold mt-3">403 — Accès refusé</h1>
+    <p class="text-muted">Vous n'avez pas les permissions nécessaires.</p>
+    <a href="{% url 'core:dashboard' %}" class="btn btn-primary">Retour au tableau de bord</a>
+</div>
+{% endblock %}

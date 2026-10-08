@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Modifier {{ detenu.matricule }} — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm p-4 rounded-4">
+    <h1 class="h4 fw-bold font-outfit mb-3">Modifier — {{ detenu.matricule }}</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">Nom *</label><input name="nom" class="form-control" value="{{ detenu.nom }}" required></div>
+            <div class="col-md-4"><label class="form-label">Postnom</label><input name="postnom" class="form-control" value="{{ detenu.postnom|default:'' }}"></div>
+            <div class="col-md-4"><label class="form-label">Prénom *</label><input name="prenom" class="form-control" value="{{ detenu.prenom }}" required></div>
+            <div class="col-md-4"><label class="form-label">Date naissance *</label><input type="date" name="date_naissance" class="form-control" value="{{ detenu.date_naissance|date:'Y-m-d' }}" required></div>
+            <div class="col-md-4"><label class="form-label">Lieu naissance *</label><input name="lieu_naissance" class="form-control" value="{{ detenu.lieu_naissance }}" required></div>
+            <div class="col-md-2"><label class="form-label">Genre</label>
+                <select name="genre" class="form-select"><option value="M" {% if detenu.genre == 'M' %}selected{% endif %}>M</option><option value="F" {% if detenu.genre == 'F' %}selected{% endif %}>F</option></select>
+            </div>
+            <div class="col-md-2"><label class="form-label">État civil</label>
+                <select name="etat_civil" class="form-select">
+                    <option value="celibataire" {% if detenu.etat_civil == 'celibataire' %}selected{% endif %}>Célibataire</option>
+                    <option value="marie" {% if detenu.etat_civil == 'marie' %}selected{% endif %}>Marié(e)</option>
+                    <option value="divorce" {% if detenu.etat_civil == 'divorce' %}selected{% endif %}>Divorcé(e)</option>
+                    <option value="veuf" {% if detenu.etat_civil == 'veuf' %}selected{% endif %}>Veuf/Veuve</option>
+                </select>
+            </div>
+            <div class="col-md-4"><label class="form-label">Nationalité</label><input name="nationalite" class="form-control" value="{{ detenu.nationalite }}"></div>
+            <div class="col-md-8"><label class="form-label">Adresse</label><input name="adresse" class="form-control" value="{{ detenu.adresse|default:'' }}"></div>
+            <div class="col-md-4"><label class="form-label">Statut</label>
+                <select name="statut_judiciaire" class="form-select">{% for v,l in StatutJudiciaire.choices %}<option value="{{ v }}" {% if detenu.statut_judiciaire == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+            </div>
+            <div class="col-md-4"><label class="form-label">Dangerosité</label>
+                <select name="niveau_dangerosite" class="form-select">{% for v,l in NiveauDangerosite.choices %}<option value="{{ v }}" {% if detenu.niveau_dangerosite == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+            </div>
+            <div class="col-md-4"><label class="form-label">Cellule</label>
+                <select name="cellule_id" class="form-select"><option value="">— Aucune —</option>
+                {% for c in cellules %}<option value="{{ c.id }}" {% if detenu.cellule_id == c.id %}selected{% endif %}>{{ c.code_cellule }}</option>{% endfor %}</select>
+            </div>
+            <div class="col-12"><label class="form-label">Motif *</label><textarea name="motif_inculpation" class="form-control" rows="3" required>{{ detenu.motif_inculpation }}</textarea></div>
+            <div class="col-md-6"><label class="form-label">Nouvelle photo</label><input type="file" name="photo" class="form-control" accept=".jpg,.jpeg,.png,.webp"></div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-primary">Enregistrer</button>
+            <a href="{% url 'prison:detenus_show' detenu.pk %}" class="btn btn-outline-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Nouveau jugement — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm p-4 rounded-4" style="max-width:720px;">
+    <h1 class="h4 fw-bold mb-3">Enregistrer un jugement</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-12">
+                <label class="form-label">Détenu *</label>
+                <select name="detenu_id" class="form-select" required>
+                    <option value="">— Sélectionner —</option>
+                    {% for d in detenus %}
+                    <option value="{{ d.id }}" {% if selected_detenu and selected_detenu.id == d.id %}selected{% endif %}>{{ d.matricule }} — {{ d.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6"><label class="form-label">Tribunal *</label><input name="tribunal" class="form-control" required></div>
+            <div class="col-md-6"><label class="form-label">N° dossier *</label><input name="numero_dossier" class="form-control" required></div>
+            <div class="col-md-4"><label class="form-label">Date *</label><input type="date" name="date_jugement" class="form-control" required></div>
+            <div class="col-md-8"><label class="form-label">Type de décision *</label>
+                <select name="type_decision" class="form-select">{% for v,l in TypeDecision.choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+            </div>
+            <div class="col-md-4"><label class="form-label">Peine (ans)</label><input type="number" name="peine_ans" class="form-control" value="0" min="0"></div>
+            <div class="col-md-4"><label class="form-label">Peine (mois)</label><input type="number" name="peine_mois" class="form-control" value="0" min="0"></div>
+            <div class="col-md-4"><label class="form-label">Amende</label><input type="number" step="0.01" name="peine_amende" class="form-control" value="0"></div>
+            <div class="col-md-6"><label class="form-label">Nom du juge</label><input name="juge_nom" class="form-control"></div>
+            <div class="col-12"><label class="form-label">Résumé du verdict *</label><textarea name="resume_verdict" class="form-control" rows="3" required></textarea></div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-primary">Enregistrer</button>
+            <a href="{% url 'prison:jugements' %}" class="btn btn-outline-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

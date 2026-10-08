@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Jugements — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-4">
+    <h1 class="h3 fw-bold font-outfit mb-0">Jugements &amp; Peines</h1>
+    {% if user.can_write_detenus %}
+    <a href="{% url 'prison:jugements_create' %}" class="btn btn-primary rounded-3">Nouveau jugement</a>
+    {% endif %}
+</div>
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead><tr><th>Dossier</th><th>Détenu</th><th>Tribunal</th><th>Décision</th><th>Date</th></tr></thead>
+            <tbody>
+            {% for j in jugements %}
+            <tr>
+                <td>{{ j.numero_dossier }}</td>
+                <td><a href="{% url 'prison:detenus_show' j.detenu_id %}">{{ j.detenu.matricule }}</a></td>
+                <td>{{ j.tribunal }}</td>
+                <td>{{ j.get_type_decision_display }}</td>
+                <td>{{ j.date_jugement|date:"d/m/Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">Aucun jugement</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

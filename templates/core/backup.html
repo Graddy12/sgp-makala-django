@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Sauvegarde — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="card shadow-sm border-0 p-4 rounded-4" style="max-width:560px;">
+    <h1 class="h4 fw-bold font-outfit mb-2">Sauvegarde de la base de données</h1>
+    <p class="text-muted">Téléchargez une copie complète du fichier SQLite (<code>db.sqlite3</code>).</p>
+    <form method="post" action="{% url 'core:backup_export' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary rounded-3"><i class="bi bi-download me-1"></i> Télécharger la sauvegarde</button>
+    </form>
+</div>
+{% endblock %}

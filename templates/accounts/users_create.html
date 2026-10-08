@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Nouvel utilisateur — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm p-4 rounded-4" style="max-width:640px;">
+    <h1 class="h4 fw-bold mb-3">Créer un utilisateur</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Nom *</label><input name="nom" class="form-control" required></div>
+            <div class="col-md-6"><label class="form-label">Prénom *</label><input name="prenom" class="form-control" required></div>
+            <div class="col-md-6"><label class="form-label">Email *</label><input type="email" name="email" class="form-control" required></div>
+            <div class="col-md-6"><label class="form-label">Téléphone</label><input name="telephone" class="form-control"></div>
+            <div class="col-md-6">
+                <label class="form-label">Rôle *</label>
+                <select name="role" class="form-select" required>
+                    {% for value, label in roles %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6"><label class="form-label">Mot de passe *</label><input type="password" name="password" class="form-control" minlength="8" required></div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-primary">Enregistrer</button>
+            <a href="{% url 'accounts:users' %}" class="btn btn-outline-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
