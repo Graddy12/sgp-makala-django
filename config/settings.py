@@ -12,9 +12,14 @@ env = environ.Env(
 )
 environ.Env.read_env(BASE_DIR / '.env')
 
+IS_VERCEL = bool(os.environ.get('VERCEL'))
+
 SECRET_KEY = env('SECRET_KEY', default='dev-sgp-makala-insecure-change-me')
-DEBUG = env('DEBUG')
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', 'testserver', '.vercel.app'])
+DEBUG = env.bool('DEBUG', default=not IS_VERCEL)
+ALLOWED_HOSTS = env.list(
+    'ALLOWED_HOSTS',
+    default=['localhost', '127.0.0.1', 'testserver', '.vercel.app'],
+)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -60,10 +65,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+# Sur Vercel le filesystem est éphémère : SQLite dans /tmp (demo only).
+_db_name = Path('/tmp/sgp_makala.sqlite3') if IS_VERCEL else (BASE_DIR / 'db.sqlite3')
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': str(_db_name),
     }
 }
 
@@ -116,7 +123,12 @@ APP_NAME = 'SGP Makala'
 PRISON_NAME = 'Prison Centrale de Makala'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
+CSRF_TRUSTED_ORIGINS = env.list(
+    'CSRF_TRUSTED_ORIGINS',
+    default=['https://*.vercel.app'] if IS_VERCEL else [],
+)
+if IS_VERCEL:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Bootstrap admin from env
 SGP_ADMIN_EMAIL = env('SGP_ADMIN_EMAIL', default='admin@makala.cd')
