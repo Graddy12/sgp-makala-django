@@ -8,7 +8,7 @@ Recréation Django du projet PHP original, avec **SQLite**.
 - Django 5 + SQLite
 - Bootstrap 5 / Chart.js / ReportLab (PDF)
 - Auth RBAC (5 rôles)
-- WhiteNoise (static) — prêt Vercel
+- WhiteNoise (static) — prêt Render
 
 ## Démarrage local
 
@@ -35,12 +35,13 @@ Ouvrir http://127.0.0.1:8000/
 
 Dashboard, Détenus, Cellules, Jugements, Transferts, Visites, Documents, Rapports PDF, Audit, Users, Backup SQLite.
 
-## Déploiement (GitHub → Vercel)
+## Déploiement (GitHub → Render)
 
-1. Pousser le dossier `SGP_DJANGO` (ou le repo racine) sur GitHub.
-2. Importer le projet sur [Vercel](https://vercel.com) (framework Python).
-3. Variables d'environnement : `SECRET_KEY`, `DEBUG=False`, `ALLOWED_HOSTS`, `SGP_ADMIN_*`.
-4. **Limites Vercel** : filesystem éphémère (uploads/SQLite non persistants). Pour la prod réelle, brancher Postgres (Neon) + stockage objet (S3/R2).
+1. Pousser les changements sur GitHub.
+2. Dans Render, choisir **New → Blueprint**, puis sélectionner ce dépôt. Render lira `render.yaml` et créera le service Web gratuit.
+3. Le Blueprint génère `SECRET_KEY` et `SGP_ADMIN_PASSWORD`. Après le premier déploiement, consulter la valeur de `SGP_ADMIN_PASSWORD` dans les variables du service pour se connecter avec `SGP_ADMIN_EMAIL`.
+
+**Important :** le service gratuit Render utilise un disque éphémère. La base SQLite et les documents téléversés peuvent être perdus lors d'un redémarrage ou d'un nouveau déploiement. Cette configuration est réservée aux essais avec des données fictives, pas aux données pénitentiaires réelles. Une mise en production nécessite une base PostgreSQL et un stockage persistant des documents.
 
 ## Structure
 

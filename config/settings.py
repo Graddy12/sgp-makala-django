@@ -13,12 +13,20 @@ env = environ.Env(
 environ.Env.read_env(BASE_DIR / '.env')
 
 IS_VERCEL = bool(os.environ.get('VERCEL'))
+RENDER_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+IS_RENDER = bool(RENDER_HOSTNAME)
+IS_DEPLOYED = IS_VERCEL or IS_RENDER
 
 SECRET_KEY = env('SECRET_KEY', default='dev-sgp-makala-insecure-change-me')
-DEBUG = env.bool('DEBUG', default=not IS_VERCEL)
+DEBUG = env.bool('DEBUG', default=not IS_DEPLOYED)
+_default_allowed_hosts = ['localhost', '127.0.0.1', 'testserver']
+if IS_VERCEL:
+    _default_allowed_hosts.append('.vercel.app')
+if RENDER_HOSTNAME:
+    _default_allowed_hosts.append(RENDER_HOSTNAME)
 ALLOWED_HOSTS = env.list(
     'ALLOWED_HOSTS',
-    default=['localhost', '127.0.0.1', 'testserver', '.vercel.app'],
+    default=_default_allowed_hosts,
 )
 
 INSTALLED_APPS = [
@@ -65,12 +73,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Sur Vercel le filesystem est éphémère : SQLite dans /tmp (demo only).
-_db_name = Path('/tmp/sgp_makala.sqlite3') if IS_VERCEL else (BASE_DIR / 'db.sqlite3')
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': str(_db_name),
+        'NAME': str(BASE_DIR / 'db.sqlite3'),
     }
 }
 
@@ -125,10 +131,16 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_TRUSTED_ORIGINS = env.list(
     'CSRF_TRUSTED_ORIGINS',
-    default=['https://*.vercel.app'] if IS_VERCEL else [],
+    default=(
+        (['https://*.vercel.app'] if IS_VERCEL else [])
+        + ([f'https://{RENDER_HOSTNAME}'] if RENDER_HOSTNAME else [])
+    ),
 )
-if IS_VERCEL:
+if IS_DEPLOYED:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 # Bootstrap admin from env
 SGP_ADMIN_EMAIL = env('SGP_ADMIN_EMAIL', default='admin@makala.cd')
