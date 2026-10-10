@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.db.models import Q
 
 from accounts.models import Role, ROLE_BADGES
 from prison.models import (
@@ -13,10 +14,11 @@ def sgp_globals(request):
     unread = 0
     if getattr(request, 'user', None) and request.user.is_authenticated:
         from core.models import Notification
-        notifications = list(
-            Notification.objects.filter(user=request.user, is_read=False)[:8]
+        visible_notifications = Notification.objects.filter(
+            Q(user=request.user) | Q(user__isnull=True), is_read=False
         )
-        unread = Notification.objects.filter(user=request.user, is_read=False).count()
+        notifications = list(visible_notifications[:8])
+        unread = visible_notifications.count()
 
     return {
         'APP_NAME': settings.APP_NAME,

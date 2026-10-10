@@ -51,7 +51,7 @@
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0 registry-table">
             <caption class="visually-hidden">Registre des détenus correspondant aux filtres sélectionnés</caption>
-            <thead><tr><th scope="col">Détenu</th><th scope="col">Statut judiciaire</th><th scope="col">Dangerosité</th><th scope="col">Cellule</th><th scope="col">Écrou</th><th scope="col">Dossier</th></tr></thead>
+            <thead><tr><th scope="col">Détenu</th><th scope="col">Statut judiciaire</th><th scope="col">Dangerosité</th><th scope="col">Cellule / pavillon</th><th scope="col">Écrou</th><th scope="col">Dossier</th></tr></thead>
             <tbody>
             {% for d in page_obj %}
             <tr>
@@ -61,7 +61,16 @@
                 </div></td>
                 <td><span class="badge {{ d.badge_statut }}">{{ d.get_statut_judiciaire_display }}</span></td>
                 <td><span class="badge {{ d.badge_danger }}">{{ d.get_niveau_dangerosite_display }}</span></td>
-                <td>{{ d.cellule.code_cellule|default:"—" }}</td>
+                <td>
+                    {% if d.cellule %}
+                    <a href="{% url 'prison:cellules_show' d.cellule.pk %}" class="fw-semibold text-break">{{ d.cellule.code_cellule }}</a>
+                    <div class="small text-muted">{{ d.cellule.pavillon }} · {{ d.cellule.bloc }}</div>
+                    {% if d.statut_judiciaire != 'prevenu' and d.statut_judiciaire != 'condamne' %}<div class="small text-muted">Référence conservée · sans affectation active</div>{% endif %}
+                    {% elif d.statut_judiciaire == 'prevenu' or d.statut_judiciaire == 'condamne' %}
+                    <div class="small text-warning-emphasis fw-semibold">Affectation à compléter</div>
+                    {% if user.can_write_detenus %}<a href="{% url 'prison:detenus_edit' d.pk %}" class="small">Renseigner la cellule</a>{% endif %}
+                    {% else %}<span class="small text-muted">Sans affectation active</span>{% endif %}
+                </td>
                 <td class="small">{{ d.date_ecrou|date:"d/m/Y" }}</td>
                 <td><a href="{% url 'prison:detenus_show' d.pk %}" class="btn btn-sm btn-outline-primary" aria-label="Consulter le dossier de {{ d.full_name }}">Consulter</a></td>
             </tr>

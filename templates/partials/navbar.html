@@ -1,17 +1,48 @@
-<header class="navbar d-flex align-items-center justify-content-between px-3 px-md-4">
-    <div class="d-flex align-items-center gap-3">
-        <button type="button" id="sidebarToggle" class="btn btn-light btn-sm border" aria-label="Afficher ou masquer le menu" aria-controls="sidebar" aria-expanded="true">
-            <i class="bi bi-list fs-5"></i>
+<header class="navbar sgp-navbar">
+    <div class="navbar-identity">
+        <button type="button" id="sidebarToggle" class="navbar-menu-button" aria-label="Afficher ou masquer le menu" aria-controls="sidebar" aria-expanded="true">
+            <i class="bi bi-list" aria-hidden="true"></i>
         </button>
-        <div>
-            <div class="fw-semibold text-dark small mb-0">{% block page_title %}{{ PRISON_NAME }}{% endblock %}</div>
-            <div class="text-muted" style="font-size:0.72rem;">{% now "d/m/Y H:i" %}</div>
+        <div class="navbar-branding">
+            <div class="navbar-title">{{ PRISON_NAME }}</div>
+            <span class="navbar-location"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Kinshasa / Selembao</span>
         </div>
     </div>
-    <div class="d-flex align-items-center gap-2">
-        {% if sgp_unread_count %}
-        <span class="badge bg-danger rounded-pill">{{ sgp_unread_count }}</span>
-        {% endif %}
+    <form method="get" action="{% url 'prison:detenus' %}" class="navbar-search" role="search" aria-label="Recherche d'un détenu">
+        <label for="navbarDetenuSearch" class="visually-hidden">Rechercher un détenu</label>
+        <button type="submit" class="navbar-search-submit" aria-label="Rechercher" title="Rechercher"><i class="bi bi-search" aria-hidden="true"></i></button>
+        <input type="search" id="navbarDetenuSearch" name="search" value="{{ request.GET.search|default:'' }}" placeholder="Rechercher un détenu…" autocomplete="off">
+    </form>
+    <div class="navbar-actions">
+        <button type="button" id="themeToggle" class="navbar-icon-button" aria-label="Activer le thème sombre" aria-pressed="false" title="Activer le thème sombre">
+            <i class="bi bi-moon-stars" aria-hidden="true"></i>
+        </button>
+        <div class="dropdown navbar-notifications">
+            <button type="button" id="notificationsToggle" class="navbar-icon-button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="notificationPanel" aria-label="Notifications : {{ sgp_unread_count }} non lue{{ sgp_unread_count|pluralize }}" title="Notifications">
+                <i class="bi bi-bell" aria-hidden="true"></i>
+                {% if sgp_unread_count %}<span class="notification-dot" aria-hidden="true"></span>{% endif %}
+            </button>
+            <div class="dropdown-menu dropdown-menu-end notification-panel" id="notificationPanel" aria-labelledby="notificationsToggle">
+                <div class="notification-panel-heading">
+                    <h2 class="h6 fw-semibold mb-0">Notifications</h2>
+                    {% if sgp_unread_count %}<span class="badge bg-danger rounded-pill">{{ sgp_unread_count }}</span>{% endif %}
+                </div>
+                <ul class="notification-list list-unstyled mb-0">
+                    {% for notification in sgp_notifications %}
+                    <li class="notification-item">
+                        <i class="bi {% if notification.type == 'danger' %}bi-exclamation-circle text-danger{% elif notification.type == 'warning' %}bi-exclamation-triangle text-warning{% elif notification.type == 'success' %}bi-check-circle text-success{% else %}bi-info-circle text-primary{% endif %}" aria-hidden="true"></i>
+                        <div>
+                            <div class="notification-title">{{ notification.titre }}</div>
+                            <p class="notification-message mb-1">{{ notification.message }}</p>
+                            <time class="notification-time">{{ notification.created_at|date:"d/m/Y H:i" }}</time>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="notification-empty"><i class="bi bi-bell" aria-hidden="true"></i><p class="mb-0">Aucune nouvelle notification.</p></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
         <span class="badge {{ user.role_badge }} navbar-role">{{ user.role_label }}</span>
     </div>
 </header>

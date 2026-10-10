@@ -87,11 +87,16 @@ def detenus_show(request, pk):
     detenu = get_object_or_404(
         Detenu.objects.select_related('cellule', 'created_by'), pk=pk
     )
+    today = timezone.localdate()
+    age = today.year - detenu.date_naissance.year - (
+        (today.month, today.day) < (detenu.date_naissance.month, detenu.date_naissance.day)
+    )
     return render(request, 'prison/detenus_show.html', {
         'detenu': detenu,
+        'age_detenu': age,
         'jugements': detenu.jugements.select_related('created_by').all(),
         'transferts': detenu.transferts.select_related('autorise_par').all(),
-        'visites': detenu.visites.select_related('enregistre_par').all()[:20],
+        'visites': detenu.visites.select_related('enregistre_par').all(),
         'documents': detenu.documents.select_related('uploade_par').all(),
     })
 
@@ -126,7 +131,7 @@ def detenus_archive(request, pk):
 
 @login_required
 def detenus_print(request, pk):
-    detenu = get_object_or_404(Detenu.objects.select_related('cellule'), pk=pk)
+    detenu = get_object_or_404(Detenu.objects.select_related('cellule', 'created_by'), pk=pk)
     log_audit(request, 'PRINT_FICHE', 'DETENUS', f'Fiche PDF {detenu.matricule}')
     return fiche_ecrou_pdf(detenu)
 

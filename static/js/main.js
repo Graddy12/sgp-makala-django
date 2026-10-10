@@ -1,7 +1,37 @@
 /**
  * SGP Makala — navigation, accessibility and form previews.
  */
+// Restore the chosen theme before initializing page interactions.
+(function () {
+    let theme = 'light';
+    try {
+        if (localStorage.getItem('sgp_theme') === 'dark') theme = 'dark';
+    } catch (error) { /* Theme selection also works without browser storage. */ }
+    document.documentElement.setAttribute('data-bs-theme', theme);
+})();
+
 document.addEventListener('DOMContentLoaded', function () {
+    const themeToggle = document.getElementById('themeToggle');
+    function applyTheme(theme, persist = false) {
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        if (themeToggle) {
+            const dark = theme === 'dark';
+            const label = dark ? 'Activer le thème clair' : 'Activer le thème sombre';
+            themeToggle.setAttribute('aria-pressed', String(dark));
+            themeToggle.setAttribute('aria-label', label);
+            themeToggle.title = label;
+            themeToggle.querySelector('i').className = dark ? 'bi bi-sun' : 'bi bi-moon-stars';
+        }
+        if (persist) {
+            try { localStorage.setItem('sgp_theme', theme); }
+            catch (error) { /* Keep the current theme when storage is disabled. */ }
+        }
+    }
+    applyTheme(document.documentElement.getAttribute('data-bs-theme'));
+    themeToggle?.addEventListener('click', function () {
+        applyTheme(document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark', true);
+    });
+
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebarToggle');
     const backdrop = document.getElementById('sidebarBackdrop');

@@ -4,98 +4,198 @@
 <div class="page-header">
     <div>
         <a href="{% url 'prison:detenus' %}" class="small d-inline-block mb-2"><i class="bi bi-arrow-left" aria-hidden="true"></i> Retour au registre</a>
-        <h1 class="h3 fw-bold font-outfit mb-1">{{ detenu.full_name }}</h1>
-        <p class="mb-2"><code>{{ detenu.matricule }}</code>
-            <span class="badge {{ detenu.badge_statut }} ms-2">{{ detenu.get_statut_judiciaire_display }}</span>
-            <span class="badge {{ detenu.badge_danger }}">{{ detenu.get_niveau_dangerosite_display }}</span>
+        <h1 class="h3 fw-bold font-outfit mb-1 text-break">{{ detenu.full_name }}</h1>
+        <p class="mb-0 d-flex flex-wrap align-items-center gap-2">
+            <code>{{ detenu.matricule }}</code>
+            <span class="badge {{ detenu.badge_statut }}">{{ detenu.get_statut_judiciaire_display }}</span>
+            <span class="badge {{ detenu.badge_danger }}">Dangerosité : {{ detenu.get_niveau_dangerosite_display }}</span>
         </p>
     </div>
     <div class="d-flex flex-wrap gap-2">
-        <a href="{% url 'prison:detenus_print' detenu.pk %}" target="_blank" rel="noopener" class="btn btn-outline-danger btn-sm"><i class="bi bi-file-pdf"></i> Fiche PDF</a>
+        <a href="{% url 'prison:detenus_print' detenu.pk %}" target="_blank" rel="noopener" class="btn btn-outline-danger btn-sm"><i class="bi bi-file-pdf" aria-hidden="true"></i> Fiche PDF</a>
         {% if user.can_write_detenus %}
-        <a href="{% url 'prison:detenus_edit' detenu.pk %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i> Modifier</a>
-        <a href="{% url 'prison:jugements_create' %}?detenu_id={{ detenu.pk }}" class="btn btn-outline-secondary btn-sm">Jugement</a>
-        <a href="{% url 'prison:visites_create' %}?detenu_id={{ detenu.pk }}" class="btn btn-outline-secondary btn-sm">Visite</a>
-        {% if detenu.statut_judiciaire != 'archive' %}
-        <form method="post" action="{% url 'prison:detenus_archive' detenu.pk %}" onsubmit="return confirm('Archiver ce dossier ?');">{% csrf_token %}
-            <button class="btn btn-outline-dark btn-sm">Archiver</button>
-        </form>
+        <a href="{% url 'prison:detenus_edit' detenu.pk %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil" aria-hidden="true"></i> Modifier le dossier</a>
+        <a href="{% url 'prison:jugements_create' %}?detenu_id={{ detenu.pk }}" class="btn btn-outline-secondary btn-sm">Ajouter un jugement</a>
         {% endif %}
+        {% if user.can_write_visites %}<a href="{% url 'prison:visites_create' %}?detenu_id={{ detenu.pk }}" class="btn btn-outline-secondary btn-sm">Ajouter une visite</a>{% endif %}
+        {% if user.can_write_transferts %}<a href="{% url 'prison:transferts_create' %}?detenu_id={{ detenu.pk }}" class="btn btn-outline-secondary btn-sm">Planifier un transfert</a>{% endif %}
+        {% if user.can_write_detenus and detenu.statut_judiciaire != 'archive' %}
+        <form method="post" action="{% url 'prison:detenus_archive' detenu.pk %}" onsubmit="return confirm('Archiver ce dossier ?');">{% csrf_token %}<button class="btn btn-outline-dark btn-sm">Archiver</button></form>
         {% endif %}
     </div>
 </div>
 
+<nav class="d-flex flex-wrap gap-2 mb-4" aria-label="Rubriques du dossier">
+    <a href="#identite" class="btn btn-light btn-sm">Identité</a>
+    <a href="#affectation" class="btn btn-light btn-sm">Cellule et pavillon</a>
+    <a href="#jugements" class="btn btn-light btn-sm">Jugements ({{ jugements|length }})</a>
+    <a href="#documents" class="btn btn-light btn-sm">Documents ({{ documents|length }})</a>
+    <a href="#visites" class="btn btn-light btn-sm">Visites ({{ visites|length }})</a>
+    <a href="#transferts" class="btn btn-light btn-sm">Transferts ({{ transferts|length }})</a>
+</nav>
+
 <div class="row g-3 mb-4">
-    <div class="col-md-8">
-        <div class="card border-0 shadow-sm rounded-4 p-4">
-            <h2 class="h6 fw-bold mb-3">Identité</h2>
-            <div class="row g-2 small">
-                <div class="col-sm-6"><strong>Naissance :</strong> {{ detenu.date_naissance|date:"d/m/Y" }} — {{ detenu.lieu_naissance }}</div>
-                <div class="col-sm-6"><strong>Genre :</strong> {{ detenu.get_genre_display }}</div>
-                <div class="col-sm-6"><strong>Nationalité :</strong> {{ detenu.nationalite }}</div>
-                <div class="col-sm-6"><strong>État civil :</strong> {{ detenu.get_etat_civil_display }}</div>
-                <div class="col-sm-6"><strong>Cellule :</strong> {{ detenu.cellule.code_cellule|default:"—" }}</div>
-                <div class="col-sm-6"><strong>Écrou :</strong> {{ detenu.date_ecrou|date:"d/m/Y H:i" }}</div>
-                <div class="col-12"><strong>Motif :</strong> {{ detenu.motif_inculpation }}</div>
-                {% if detenu.date_liberation_prevue %}<div class="col-sm-6"><strong>Libération prévue :</strong> {{ detenu.date_liberation_prevue|date:"d/m/Y" }}</div>{% endif %}
+    <div class="col-lg-8">
+        <section id="identite" class="card border-0 shadow-sm rounded-4 p-3 p-md-4 h-100" aria-labelledby="identiteTitre">
+            <h2 id="identiteTitre" class="h5 fw-bold font-outfit mb-3">Identité et écrou</h2>
+            <dl class="row g-2 small mb-0">
+                <dt class="col-sm-4">Nom</dt><dd class="col-sm-8 text-break">{{ detenu.nom }}</dd>
+                <dt class="col-sm-4">Postnom</dt><dd class="col-sm-8 text-break">{{ detenu.postnom|default:"Non renseigné" }}</dd>
+                <dt class="col-sm-4">Prénom</dt><dd class="col-sm-8 text-break">{{ detenu.prenom }}</dd>
+                <dt class="col-sm-4">Naissance</dt><dd class="col-sm-8">{{ detenu.date_naissance|date:"d/m/Y" }} à {{ detenu.lieu_naissance }}{% if age_detenu %} · {{ age_detenu }} ans{% endif %}</dd>
+                <dt class="col-sm-4">Genre</dt><dd class="col-sm-8">{{ detenu.get_genre_display }}</dd>
+                <dt class="col-sm-4">Nationalité</dt><dd class="col-sm-8">{{ detenu.nationalite }}</dd>
+                <dt class="col-sm-4">État civil</dt><dd class="col-sm-8">{{ detenu.get_etat_civil_display }}</dd>
+                <dt class="col-sm-4">Adresse</dt><dd class="col-sm-8 text-break">{{ detenu.adresse|default:"Non renseignée" }}</dd>
+                <dt class="col-sm-4">Date d'écrou</dt><dd class="col-sm-8">{{ detenu.date_ecrou|date:"d/m/Y à H:i" }}</dd>
+                <dt class="col-sm-4">Motif d'inculpation</dt><dd class="col-sm-8 text-break">{{ detenu.motif_inculpation|linebreaksbr }}</dd>
+                <dt class="col-sm-4">Libération prévue</dt><dd class="col-sm-8">{{ detenu.date_liberation_prevue|date:"d/m/Y"|default:"Non renseignée" }}</dd>
+                <dt class="col-sm-4">Libération effective</dt><dd class="col-sm-8">{{ detenu.date_liberation_effective|date:"d/m/Y à H:i"|default:"Non renseignée" }}</dd>
+            </dl>
+            <div class="border-top pt-3 mt-3 small text-muted">
+                <div>Enregistré par {{ detenu.created_by.full_name }} le {{ detenu.created_at|date:"d/m/Y à H:i" }}.</div>
+                <div>Dernière mise à jour : {{ detenu.updated_at|date:"d/m/Y à H:i" }}.</div>
             </div>
-        </div>
+        </section>
     </div>
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+    <div class="col-lg-4">
+        <section class="card border-0 shadow-sm rounded-4 p-3 p-md-4 text-center h-100" aria-labelledby="portraitTitre">
+            <h2 id="portraitTitre" class="h6 fw-bold mb-3">Portrait du dossier</h2>
             {% if detenu.photo and detenu.photo != 'default_detenu.png' %}
             <img src="{% url 'core:media_photo' detenu.photo %}" alt="Portrait de {{ detenu.full_name }}" class="detenu-photo-lg mx-auto mb-3" width="150" height="175">
             {% else %}
-            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center mb-2" style="height:180px;"><i class="bi bi-person display-3 text-muted"></i></div>
+            <div class="bg-body-tertiary rounded-3 d-flex align-items-center justify-content-center mb-3" style="height:180px;"><i class="bi bi-person display-3 text-muted" aria-hidden="true"></i></div>
+            <p class="small text-muted">Aucune photo enregistrée.</p>
             {% endif %}
-            <div class="small text-muted">Enregistré par {{ detenu.created_by.full_name }}</div>
-        </div>
+            <div class="fw-semibold text-break">{{ detenu.full_name }}</div>
+            <div class="small text-muted text-break">{{ detenu.matricule }}</div>
+        </section>
     </div>
 </div>
 
+<section id="affectation" class="card border-0 shadow-sm rounded-4 p-3 p-md-4 mb-4" aria-labelledby="affectationTitre">
+    <h2 id="affectationTitre" class="h5 fw-bold font-outfit mb-3"><i class="bi bi-grid-3x3-gap text-primary me-2" aria-hidden="true"></i>Affectation pénitentiaire</h2>
+    {% if detenu.statut_judiciaire == 'prevenu' or detenu.statut_judiciaire == 'condamne' %}
+        {% if detenu.cellule %}
+        {% with cellule=detenu.cellule occupation=detenu.cellule.occupation %}
+        <div class="row g-3 align-items-start">
+            <div class="col-md-8">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <a href="{% url 'prison:cellules_show' cellule.pk %}" class="h5 fw-bold mb-0 text-break">{{ cellule.code_cellule }}</a>
+                    {% if cellule.statut == 'maintenance' or cellule.statut == 'isolement' %}<span class="badge {{ cellule.badge_class }}">{{ cellule.get_statut_display }}</span>{% elif occupation >= cellule.capacite_max %}<span class="badge bg-danger">Pleine</span>{% else %}<span class="badge bg-success">Disponible</span>{% endif %}
+                </div>
+                <dl class="row g-2 small mb-0">
+                    <dt class="col-sm-3">Pavillon</dt><dd class="col-sm-9">{{ cellule.pavillon }}</dd>
+                    <dt class="col-sm-3">Bloc</dt><dd class="col-sm-9">{{ cellule.bloc }}</dd>
+                    <dt class="col-sm-3">Description</dt><dd class="col-sm-9 text-break">{{ cellule.description|default:"Non renseignée"|linebreaksbr }}</dd>
+                </dl>
+            </div>
+            <div class="col-md-4">
+                <div class="border rounded-3 p-3">
+                    <div class="small text-muted mb-1">Occupation de la cellule</div>
+                    <div class="h4 fw-bold mb-2">{{ occupation }} <span class="h6 text-muted">/ {{ cellule.capacite_max }} places</span></div>
+                    <div class="progress" style="height:8px;" role="progressbar" aria-label="Occupation de {{ cellule.code_cellule }}" aria-valuenow="{{ occupation }}" aria-valuemin="0" aria-valuemax="{{ cellule.capacite_max }}">
+                        <div class="progress-bar {% if occupation >= cellule.capacite_max %}bg-danger{% endif %}" style="width:{% widthratio occupation cellule.capacite_max 100 %}%"></div>
+                    </div>
+                    <a href="{% url 'prison:cellules_show' cellule.pk %}" class="small d-inline-block mt-3">Voir la cellule et ses occupants <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        {% else %}
+        <div class="alert alert-warning mb-0">
+            <div class="fw-semibold">Cellule non affectée</div>
+            <p class="mb-2 small">Aucune cellule n'est renseignée pour ce détenu sous écrou.</p>
+            {% if user.can_write_detenus %}<a href="{% url 'prison:detenus_edit' detenu.pk %}" class="btn btn-sm btn-outline-primary">Renseigner la cellule</a>{% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="bg-body-tertiary rounded-3 p-3">
+            <div class="fw-semibold">Aucune affectation active</div>
+            <p class="small text-muted mb-0">{% if detenu.statut_judiciaire == 'transfere' %}Ce dossier est transféré. Consultez l'historique des transferts pour connaître les mouvements enregistrés.{% elif detenu.statut_judiciaire == 'libere' %}Ce dossier est libéré. La date de libération effective figure dans les informations d'écrou lorsqu'elle a été enregistrée.{% elif detenu.statut_judiciaire == 'archive' %}Ce dossier est archivé et n'est plus comptabilisé parmi les détenus sous écrou.{% else %}Le statut de ce dossier est « {{ detenu.get_statut_judiciaire_display }} ».{% endif %}</p>
+            {% if detenu.cellule %}<div class="small mt-2">Référence de cellule conservée dans le dossier : <a href="{% url 'prison:cellules_show' detenu.cellule.pk %}">{{ detenu.cellule.code_cellule }}</a> · {{ detenu.cellule.pavillon }}.</div>{% endif %}
+        </div>
+    {% endif %}
+</section>
+
 <div class="row g-3">
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header bg-white"><strong>Jugements</strong></div>
+    <div class="col-xl-6">
+        <section id="jugements" class="card border-0 shadow-sm rounded-4 h-100" aria-labelledby="jugementsTitre">
+            <div class="card-header bg-transparent p-3"><h2 id="jugementsTitre" class="h5 fw-bold font-outfit mb-0">Jugements <span class="badge bg-secondary ms-1">{{ jugements|length }}</span></h2></div>
             <ul class="list-group list-group-flush">
                 {% for j in jugements %}
-                <li class="list-group-item small"><strong>{{ j.numero_dossier }}</strong> — {{ j.get_type_decision_display }} ({{ j.date_jugement|date:"d/m/Y" }})</li>
-                {% empty %}<li class="list-group-item text-muted small">Aucun</li>{% endfor %}
+                <li class="list-group-item p-3 small">
+                    <div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><strong class="text-break">{{ j.numero_dossier }}</strong><span class="badge {% if j.type_decision == 'condamnation' %}bg-danger{% elif j.type_decision == 'acquittement' or j.type_decision == 'liberation_conditionnelle' %}bg-success{% else %}bg-secondary{% endif %}">{{ j.get_type_decision_display }}</span></div>
+                    <dl class="row g-2 mb-0">
+                        <dt class="col-sm-4">Tribunal</dt><dd class="col-sm-8 text-break">{{ j.tribunal }}</dd>
+                        <dt class="col-sm-4">Date du jugement</dt><dd class="col-sm-8">{{ j.date_jugement|date:"d/m/Y" }}</dd>
+                        <dt class="col-sm-4">Juge</dt><dd class="col-sm-8">{{ j.juge_nom|default:"Non renseigné" }}</dd>
+                        <dt class="col-sm-4">Durée de la peine</dt><dd class="col-sm-8">{% if j.peine_ans or j.peine_mois %}{{ j.peine_ans }} an(s) et {{ j.peine_mois }} mois{% else %}Aucune durée enregistrée{% endif %}</dd>
+                        <dt class="col-sm-4">Amende</dt><dd class="col-sm-8">{{ j.peine_amende|floatformat:2 }} USD</dd>
+                        <dt class="col-sm-4">Verdict</dt><dd class="col-sm-8 text-break">{{ j.resume_verdict|linebreaksbr }}</dd>
+                    </dl>
+                    {% if j.document_path %}<a href="{% url 'core:media_document' j.document_path %}" class="btn btn-sm btn-outline-primary mt-2">Télécharger la décision jointe</a>{% endif %}
+                    <div class="text-muted border-top pt-2 mt-2">Enregistré par {{ j.created_by.full_name }} le {{ j.created_at|date:"d/m/Y à H:i" }}.</div>
+                </li>
+                {% empty %}<li class="list-group-item p-3 text-muted small">Aucun jugement enregistré dans ce dossier.</li>{% endfor %}
             </ul>
-        </div>
+        </section>
     </div>
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header bg-white"><strong>Documents</strong></div>
+    <div class="col-xl-6">
+        <section id="documents" class="card border-0 shadow-sm rounded-4 h-100" aria-labelledby="documentsTitre">
+            <div class="card-header bg-transparent p-3"><h2 id="documentsTitre" class="h5 fw-bold font-outfit mb-0">Documents <span class="badge bg-secondary ms-1">{{ documents|length }}</span></h2></div>
             <ul class="list-group list-group-flush">
                 {% for doc in documents %}
-                <li class="list-group-item small d-flex flex-wrap justify-content-between gap-2">
-                    <span>{{ doc.titre }} <span class="badge bg-secondary">{{ doc.get_type_doc_display }}</span></span>
-                    <a href="{% url 'core:media_document' doc.fichier_path %}">Télécharger</a>
+                <li class="list-group-item p-3 small">
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2"><strong class="text-break">{{ doc.titre }}</strong><span class="badge bg-secondary">{{ doc.get_type_doc_display }}</span></div>
+                    {% if doc.description %}<p class="text-break mb-2">{{ doc.description|linebreaksbr }}</p>{% endif %}
+                    <div class="text-muted mb-2">{% if doc.taille_ko %}{{ doc.taille_ko }} Ko{% else %}Taille non renseignée{% endif %} · Ajouté le {{ doc.created_at|date:"d/m/Y à H:i" }}</div>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2"><span class="text-muted">Déposé par {{ doc.uploade_par.full_name }}</span><a href="{% url 'core:media_document' doc.fichier_path %}" class="btn btn-sm btn-outline-primary" aria-label="Télécharger {{ doc.titre }}"><i class="bi bi-download" aria-hidden="true"></i> Télécharger</a></div>
                 </li>
-                {% empty %}<li class="list-group-item text-muted small">Aucun</li>{% endfor %}
+                {% empty %}<li class="list-group-item p-3 text-muted small">Aucun document joint à ce dossier.</li>{% endfor %}
             </ul>
-        </div>
+        </section>
     </div>
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header bg-white"><strong>Visites</strong></div>
+    <div class="col-xl-6">
+        <section id="visites" class="card border-0 shadow-sm rounded-4 h-100" aria-labelledby="visitesTitre">
+            <div class="card-header bg-transparent p-3"><h2 id="visitesTitre" class="h5 fw-bold font-outfit mb-0">Historique des visites <span class="badge bg-secondary ms-1">{{ visites|length }}</span></h2></div>
             <ul class="list-group list-group-flush">
                 {% for v in visites %}
-                <li class="list-group-item small">{{ v.visiteur_full_name }} — {{ v.date_visite|date:"d/m/Y" }} ({{ v.get_statut_display }})</li>
-                {% empty %}<li class="list-group-item text-muted small">Aucune</li>{% endfor %}
+                <li class="list-group-item p-3 small">
+                    <div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><strong class="text-break">{{ v.visiteur_full_name }}</strong><span class="badge {% if v.statut == 'terminee' %}bg-secondary{% elif v.statut == 'autorisee' %}bg-success{% elif v.statut == 'refusee' or v.statut == 'annulee' %}bg-danger{% else %}bg-warning text-dark{% endif %}">{{ v.get_statut_display }}</span></div>
+                    <dl class="row g-2 mb-0">
+                        <dt class="col-sm-4">Lien avec le détenu</dt><dd class="col-sm-8">{{ v.lien_parente }}</dd>
+                        <dt class="col-sm-4">Date et horaire</dt><dd class="col-sm-8">{{ v.date_visite|date:"d/m/Y" }} · {{ v.heure_debut|time:"H:i" }}{% if v.heure_fin %} à {{ v.heure_fin|time:"H:i" }}{% else %} · fin non renseignée{% endif %}</dd>
+                        <dt class="col-sm-4">Pièce d'identité</dt><dd class="col-sm-8 text-break">{{ v.type_piece_identite }} · {{ v.numero_piece }}</dd>
+                        {% if v.telephone %}<dt class="col-sm-4">Téléphone</dt><dd class="col-sm-8">{{ v.telephone }}</dd>{% endif %}
+                        {% if v.objet_visite %}<dt class="col-sm-4">Objet de la visite</dt><dd class="col-sm-8 text-break">{{ v.objet_visite }}</dd>{% endif %}
+                        {% if v.effets_apportes %}<dt class="col-sm-4">Effets apportés</dt><dd class="col-sm-8 text-break">{{ v.effets_apportes|linebreaksbr }}</dd>{% endif %}
+                    </dl>
+                    <div class="text-muted border-top pt-2 mt-2">Enregistrée par {{ v.enregistre_par.full_name }} le {{ v.created_at|date:"d/m/Y à H:i" }}.</div>
+                </li>
+                {% empty %}<li class="list-group-item p-3 text-muted small">Aucune visite enregistrée dans ce dossier.</li>{% endfor %}
             </ul>
-        </div>
+        </section>
     </div>
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header bg-white"><strong>Transferts</strong></div>
+    <div class="col-xl-6">
+        <section id="transferts" class="card border-0 shadow-sm rounded-4 h-100" aria-labelledby="transfertsTitre">
+            <div class="card-header bg-transparent p-3"><h2 id="transfertsTitre" class="h5 fw-bold font-outfit mb-0">Historique des transferts <span class="badge bg-secondary ms-1">{{ transferts|length }}</span></h2></div>
             <ul class="list-group list-group-flush">
                 {% for t in transferts %}
-                <li class="list-group-item small">→ {{ t.etablissement_destination }} — {{ t.get_statut_display }}</li>
-                {% empty %}<li class="list-group-item text-muted small">Aucun</li>{% endfor %}
+                <li class="list-group-item p-3 small">
+                    <div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><strong>{{ t.date_transfert|date:"d/m/Y" }}</strong><span class="badge {% if t.statut == 'effectue' %}bg-success{% elif t.statut == 'annule' %}bg-secondary{% elif t.statut == 'en_cours' %}bg-warning text-dark{% else %}bg-primary{% endif %}">{{ t.get_statut_display }}</span></div>
+                    <dl class="row g-2 mb-0">
+                        <dt class="col-sm-4">Provenance</dt><dd class="col-sm-8 text-break">{{ t.etablissement_provenance }}</dd>
+                        <dt class="col-sm-4">Destination</dt><dd class="col-sm-8 text-break">{{ t.etablissement_destination }}</dd>
+                        <dt class="col-sm-4">Motif</dt><dd class="col-sm-8 text-break">{{ t.motif_transfert|linebreaksbr }}</dd>
+                        <dt class="col-sm-4">Escorte</dt><dd class="col-sm-8 text-break">{{ t.escorte_agents|default:"Non renseignée" }}</dd>
+                        {% if t.notes %}<dt class="col-sm-4">Notes</dt><dd class="col-sm-8 text-break">{{ t.notes|linebreaksbr }}</dd>{% endif %}
+                    </dl>
+                    <div class="text-muted border-top pt-2 mt-2">Autorisé par {{ t.autorise_par.full_name }} · Enregistré le {{ t.created_at|date:"d/m/Y à H:i" }}.</div>
+                </li>
+                {% empty %}<li class="list-group-item p-3 text-muted small">Aucun transfert enregistré dans ce dossier.</li>{% endfor %}
             </ul>
-        </div>
+        </section>
     </div>
 </div>
 {% endblock %}
