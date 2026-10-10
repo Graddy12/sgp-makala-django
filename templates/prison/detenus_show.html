@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 {% block title %}{{ detenu.matricule }} — {{ APP_NAME }}{% endblock %}
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+<div class="page-header">
     <div>
+        <a href="{% url 'prison:detenus' %}" class="small d-inline-block mb-2"><i class="bi bi-arrow-left" aria-hidden="true"></i> Retour au registre</a>
         <h1 class="h3 fw-bold font-outfit mb-1">{{ detenu.full_name }}</h1>
         <p class="mb-2"><code>{{ detenu.matricule }}</code>
             <span class="badge {{ detenu.badge_statut }} ms-2">{{ detenu.get_statut_judiciaire_display }}</span>
@@ -10,7 +11,7 @@
         </p>
     </div>
     <div class="d-flex flex-wrap gap-2">
-        <a href="{% url 'prison:detenus_print' detenu.pk %}" target="_blank" class="btn btn-outline-danger btn-sm"><i class="bi bi-file-pdf"></i> Fiche PDF</a>
+        <a href="{% url 'prison:detenus_print' detenu.pk %}" target="_blank" rel="noopener" class="btn btn-outline-danger btn-sm"><i class="bi bi-file-pdf"></i> Fiche PDF</a>
         {% if user.can_write_detenus %}
         <a href="{% url 'prison:detenus_edit' detenu.pk %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i> Modifier</a>
         <a href="{% url 'prison:jugements_create' %}?detenu_id={{ detenu.pk }}" class="btn btn-outline-secondary btn-sm">Jugement</a>
@@ -43,7 +44,7 @@
     <div class="col-md-4">
         <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
             {% if detenu.photo and detenu.photo != 'default_detenu.png' %}
-            <img src="{% url 'core:media_photo' detenu.photo %}" alt="Photo" class="img-fluid rounded-3 mb-2" style="max-height:220px;object-fit:cover;">
+            <img src="{% url 'core:media_photo' detenu.photo %}" alt="Portrait de {{ detenu.full_name }}" class="detenu-photo-lg mx-auto mb-3" width="150" height="175">
             {% else %}
             <div class="bg-light rounded-3 d-flex align-items-center justify-content-center mb-2" style="height:180px;"><i class="bi bi-person display-3 text-muted"></i></div>
             {% endif %}
@@ -68,7 +69,7 @@
             <div class="card-header bg-white"><strong>Documents</strong></div>
             <ul class="list-group list-group-flush">
                 {% for doc in documents %}
-                <li class="list-group-item small d-flex justify-content-between">
+                <li class="list-group-item small d-flex flex-wrap justify-content-between gap-2">
                     <span>{{ doc.titre }} <span class="badge bg-secondary">{{ doc.get_type_doc_display }}</span></span>
                     <a href="{% url 'core:media_document' doc.fichier_path %}">Télécharger</a>
                 </li>

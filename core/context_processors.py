@@ -21,6 +21,7 @@ def sgp_globals(request):
     return {
         'APP_NAME': settings.APP_NAME,
         'PRISON_NAME': settings.PRISON_NAME,
+        'demo_mode': settings.DEMO_MODE,
         'Role': Role,
         'ROLE_BADGES': ROLE_BADGES,
         'STATUT_DETENU_BADGES': STATUT_DETENU_BADGES,

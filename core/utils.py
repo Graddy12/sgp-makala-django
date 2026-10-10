@@ -2,8 +2,16 @@
 from pathlib import Path
 
 from django.conf import settings
+from django.core.paginator import Paginator
 
 from .models import AuditLog, Notification
+
+
+def paginated_context(request, queryset, name, per_page=20):
+    page = Paginator(queryset, per_page).get_page(request.GET.get('page'))
+    query = request.GET.copy()
+    query.pop('page', None)
+    return {name: page, 'page_obj': page, 'pagination_query': query.urlencode()}
 
 
 def client_ip(request):

@@ -1,11 +1,11 @@
-import json
+import os
 from pathlib import Path
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
-from django.http import FileResponse, Http404, HttpResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -14,36 +14,43 @@ from accounts.models import Role
 from core.decorators import role_required
 from core.models import AuditLog
 from core.pdf import rapport_global_pdf
-from core.utils import log_audit
-from prison.models import Cellule, Detenu, StatutJudiciaire, Visite
+from core.utils import log_audit, paginated_context
+from prison.models import Cellule, Detenu, NiveauDangerosite, StatutJudiciaire, Visite
+
+
+def distribution(queryset, field, choices):
+    rows = list(queryset.values(field).annotate(total=Count('id')).order_by(field))
+    total = sum(row['total'] for row in rows) or 1
+    labels = dict(choices)
+    for row in rows:
+        row['label'] = labels.get(row[field], row[field])
+        row['percent'] = round(100 * row['total'] / total, 1)
+    return rows
+
+
+def health(request):
+    return JsonResponse({'status': 'ok', 'demo_mode': settings.DEMO_MODE,
+                         'revision': os.environ.get('RENDER_GIT_COMMIT', 'local')})
 
 
 @login_required
 def dashboard(request):
-    actifs = Detenu.objects.exclude(
-        statut_judiciaire__in=[StatutJudiciaire.ARCHIVE, StatutJudiciaire.DECEDE]
+    actifs = Detenu.objects.filter(
+        statut_judiciaire__in=[StatutJudiciaire.PREVENU, StatutJudiciaire.CONDAMNE]
     )
     total = actifs.count()
     prevenus = actifs.filter(statut_judiciaire=StatutJudiciaire.PREVENU).count()
     condamnes = actifs.filter(statut_judiciaire=StatutJudiciaire.CONDAMNE).count()
 
     cellules = Cellule.objects.all()
-    capacite = sum(c.capacite_max for c in cellules) or 1
+    capacite = sum(c.capacite_max for c in cellules.exclude(statut='maintenance'))
     occupation_count = Detenu.objects.filter(
         statut_judiciaire__in=[StatutJudiciaire.PREVENU, StatutJudiciaire.CONDAMNE]
     ).count()
-    taux = round(100 * occupation_count / capacite, 1)
+    taux = round(100 * occupation_count / capacite, 1) if capacite else 0
 
-    by_statut = list(
-        Detenu.objects.values('statut_judiciaire')
-        .annotate(total=Count('id'))
-        .order_by('statut_judiciaire')
-    )
-    by_danger = list(
-        Detenu.objects.exclude(statut_judiciaire=StatutJudiciaire.ARCHIVE)
-        .values('niveau_dangerosite')
-        .annotate(total=Count('id'))
-    )
+    by_statut = distribution(Detenu.objects.all(), 'statut_judiciaire', StatutJudiciaire.choices)
+    by_danger = distribution(actifs, 'niveau_dangerosite', NiveauDangerosite.choices)
     recent_detenus = Detenu.objects.select_related('cellule').order_by('-date_ecrou')[:8]
     recent_logs = AuditLog.objects.all()[:8]
     visites_today = Visite.objects.filter(date_visite=timezone.localdate()).count()
@@ -56,10 +63,8 @@ def dashboard(request):
         'visitesToday': visites_today,
         'recent_detenus': recent_detenus,
         'recent_logs': recent_logs,
-        'chart_statut_labels': json.dumps([s['statut_judiciaire'] for s in by_statut]),
-        'chart_statut_values': json.dumps([s['total'] for s in by_statut]),
-        'chart_danger_labels': json.dumps([d['niveau_dangerosite'] for d in by_danger]),
-        'chart_danger_values': json.dumps([d['total'] for d in by_danger]),
+        'by_statut': by_statut, 'by_danger': by_danger,
+        'occupationCount': occupation_count, 'capaciteTotale': capacite,
     }
     return render(request, 'core/dashboard.html', context)
 
@@ -71,7 +76,7 @@ def reports(request):
     condamnes = Detenu.objects.filter(statut_judiciaire=StatutJudiciaire.CONDAMNE).count()
     liberes = Detenu.objects.filter(statut_judiciaire=StatutJudiciaire.LIBERE).count()
     cellules = Cellule.objects.count()
-    by_statut = Detenu.objects.values('statut_judiciaire').annotate(total=Count('id'))
+    by_statut = distribution(Detenu.objects.all(), 'statut_judiciaire', StatutJudiciaire.choices)
     return render(request, 'core/reports.html', {
         'total': total, 'prevenus': prevenus, 'condamnes': condamnes,
         'liberes': liberes, 'cellules': cellules, 'by_statut': by_statut,
@@ -95,7 +100,7 @@ def reports_pdf(request):
     actifs = Detenu.objects.filter(
         statut_judiciaire__in=[StatutJudiciaire.PREVENU, StatutJudiciaire.CONDAMNE]
     )
-    capacite = sum(c.capacite_max for c in Cellule.objects.all()) or 1
+    capacite = sum(c.capacite_max for c in Cellule.objects.exclude(statut='maintenance')) or 1
     kpis = {
         'total': Detenu.objects.exclude(statut_judiciaire=StatutJudiciaire.ARCHIVE).count(),
         'prevenus': Detenu.objects.filter(statut_judiciaire=StatutJudiciaire.PREVENU).count(),
@@ -115,11 +120,12 @@ def audit_list(request):
         qs = qs.filter(module=module)
     if search:
         qs = qs.filter(
-            Q(description__icontains=search) | Q(action__icontains=search) | Q(user_nom__icontains=search)
+            Q(description__icontains=search) | Q(action__icontains=search) |
+            Q(user_nom__icontains=search) | Q(ip_address__icontains=search)
         )
     modules = AuditLog.objects.values_list('module', flat=True).distinct().order_by('module')
     return render(request, 'core/audit.html', {
-        'logs': qs[:200], 'modules': modules,
+        **paginated_context(request, qs, 'logs'), 'modules': modules,
         'filter_module': module, 'filter_search': search,
     })
 
@@ -148,7 +154,8 @@ def backup_export(request):
 def media_photo(request, filename):
     path = Path(settings.MEDIA_ROOT) / 'photos' / filename
     if filename == 'default_detenu.png' and not path.exists():
-        raise Http404
+        # Visible fallback for newly enrolled people who have no photo yet.
+        return HttpResponse('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><rect width="160" height="160" fill="#e2e8f0"/><circle cx="80" cy="58" r="28" fill="#94a3b8"/><path d="M24 160v-20a56 56 0 0 1 112 0v20" fill="#94a3b8"/></svg>', content_type='image/svg+xml')
     if not path.exists() or not path.is_file():
         raise Http404
     return FileResponse(open(path, 'rb'))

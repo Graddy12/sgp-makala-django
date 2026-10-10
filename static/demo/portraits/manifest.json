@@ -1,0 +1,197 @@
+{
+  "purpose": "Synthetic portraits for SGP MAKALA demonstration data only",
+  "tool": "built-in image_gen.imagegen",
+  "generation_date": "2026-10-10",
+  "persons": "All identities are entirely fictional adults; no real person is represented intentionally.",
+  "source": {
+    "file": "exec-ee65bfd4-ca4c-4367-98b6-afcec7de500c.png",
+    "sha256": "63cdc58355ba01aef6a7a371a192c304672f0c88ef9e5f2546408dbc13605ddf",
+    "size": [
+      1254,
+      1254
+    ],
+    "grid": [
+      4,
+      4
+    ]
+  },
+  "processing": "Mechanical equal-grid crop and 300px resize using Pillow; JPEG quality 88, optimized, progressive. No creative retouching.",
+  "assets": [
+    {
+      "file": "portrait_m_01.jpg",
+      "sex": "M",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 1,
+      "source_grid_column": 1,
+      "width": 300,
+      "height": 300,
+      "sha256": "e0ce762369083b7910a32e60123de8e4719662bdbfa237ab9db9f1f25ba3ba1a"
+    },
+    {
+      "file": "portrait_m_02.jpg",
+      "sex": "M",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 1,
+      "source_grid_column": 2,
+      "width": 300,
+      "height": 300,
+      "sha256": "193f7209e3f742066a4abf3cbf0243e6bae7c4a79147c223d059915540ddfbb0"
+    },
+    {
+      "file": "portrait_m_03.jpg",
+      "sex": "M",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 1,
+      "source_grid_column": 3,
+      "width": 300,
+      "height": 300,
+      "sha256": "f9411d4b664ca6d075d23cfdc78bf6162060077283b38179d384b1a08a4be21a"
+    },
+    {
+      "file": "portrait_m_04.jpg",
+      "sex": "M",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 1,
+      "source_grid_column": 4,
+      "width": 300,
+      "height": 300,
+      "sha256": "5ec09b5076b197f27bf00bedf8bb3ba87ea0361ee57fb34343c824c80bf195c6"
+    },
+    {
+      "file": "portrait_m_05.jpg",
+      "sex": "M",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 2,
+      "source_grid_column": 1,
+      "width": 300,
+      "height": 300,
+      "sha256": "7878626b1c3c325e4672cb4a2e62171c32c33fb62cf8ad252b3bc267034738c6"
+    },
+    {
+      "file": "portrait_m_06.jpg",
+      "sex": "M",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 2,
+      "source_grid_column": 2,
+      "width": 300,
+      "height": 300,
+      "sha256": "6f0ec4ea19201c7cb9b42796e37c92d62de0fc26c7667b52d77cb726db3e7f17"
+    },
+    {
+      "file": "portrait_m_07.jpg",
+      "sex": "M",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 2,
+      "source_grid_column": 3,
+      "width": 300,
+      "height": 300,
+      "sha256": "dd2f629cb2e0caa3e69149a72c97753a6f8c5110b35933f5916ad262edc27f1d"
+    },
+    {
+      "file": "portrait_m_08.jpg",
+      "sex": "M",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 2,
+      "source_grid_column": 4,
+      "width": 300,
+      "height": 300,
+      "sha256": "726a6f1dd524cb5434e2b3640dcf1a0484b0ba13d055fd7e8909b781a1f35b80"
+    },
+    {
+      "file": "portrait_f_01.jpg",
+      "sex": "F",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 3,
+      "source_grid_column": 1,
+      "width": 300,
+      "height": 300,
+      "sha256": "6ed0b08d4de0e60b6af0df774d5ca0c22efd6eca16d6957fd88593f27e31bf25"
+    },
+    {
+      "file": "portrait_f_02.jpg",
+      "sex": "F",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 3,
+      "source_grid_column": 2,
+      "width": 300,
+      "height": 300,
+      "sha256": "1b0dfc0f85c1d4c04d37111d75d3215ea8e88ea0ec0423850c05a30317fe1e75"
+    },
+    {
+      "file": "portrait_f_03.jpg",
+      "sex": "F",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 3,
+      "source_grid_column": 3,
+      "width": 300,
+      "height": 300,
+      "sha256": "3218a36520b08414c1b78ce2c9069bb17acd44779547b3b33396b6a77f6dbfef"
+    },
+    {
+      "file": "portrait_f_04.jpg",
+      "sex": "F",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 3,
+      "source_grid_column": 4,
+      "width": 300,
+      "height": 300,
+      "sha256": "4facf07143280b3e6f89a7e3a1ffd842124886dcad7a9cf7789a45ea750b4a0a"
+    },
+    {
+      "file": "portrait_f_05.jpg",
+      "sex": "F",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 4,
+      "source_grid_column": 1,
+      "width": 300,
+      "height": 300,
+      "sha256": "070ff51edbaeac89ad710e9a6ba091e591768729108c20a72af4727afe58d6f8"
+    },
+    {
+      "file": "portrait_f_06.jpg",
+      "sex": "F",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 4,
+      "source_grid_column": 2,
+      "width": 300,
+      "height": 300,
+      "sha256": "76815444852e943083261c59c1a481bbc4f45f5bd8843c0bf6400dba8ea92470"
+    },
+    {
+      "file": "portrait_f_07.jpg",
+      "sex": "F",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 4,
+      "source_grid_column": 3,
+      "width": 300,
+      "height": 300,
+      "sha256": "0fefb787975f69472b26f23b6f6fd39ddca16ac638f5372d17c68e6eb5cd1ce2"
+    },
+    {
+      "file": "portrait_f_08.jpg",
+      "sex": "F",
+      "fictional": true,
+      "adult": true,
+      "source_grid_row": 4,
+      "source_grid_column": 4,
+      "width": 300,
+      "height": 300,
+      "sha256": "f3684285396c785a2a4fd3f5a1f98186a47608a96941604ca5503806b13f0697"
+    }
+  ]
+}

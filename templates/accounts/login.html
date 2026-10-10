@@ -19,14 +19,14 @@
                     <label for="email" class="form-label fw-semibold small text-secondary">Adresse Email Officielle</label>
                     <div class="input-group">
                         <span class="input-group-text bg-body-tertiary border-end-0 text-muted"><i class="bi bi-envelope"></i></span>
-                        <input type="email" class="form-control bg-body-tertiary border-start-0" id="email" name="email" placeholder="nom@makala.cd" required autofocus>
+                        <input type="email" class="form-control bg-body-tertiary border-start-0" id="email" name="email" placeholder="nom@makala.cd" autocomplete="username" required autofocus>
                     </div>
                 </div>
                 <div class="mb-4">
                     <label for="password" class="form-label fw-semibold small text-secondary">Mot de passe</label>
                     <div class="input-group">
                         <span class="input-group-text bg-body-tertiary border-end-0 text-muted"><i class="bi bi-lock"></i></span>
-                        <input type="password" class="form-control bg-body-tertiary border-start-0" id="password" name="password" placeholder="••••••••" required>
+                        <input type="password" class="form-control bg-body-tertiary border-start-0" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100 py-2 rounded-3 fw-bold text-uppercase shadow-sm mb-3">
@@ -35,7 +35,7 @@
             </form>
         </div>
         <div class="card-footer bg-body-tertiary text-center py-3 border-0">
-            <small class="text-muted">&copy; {% now "Y" %} République Démocratique du Congo</small>
+            <small class="text-muted">{% if demo_mode %}Démonstration · données entièrement fictives{% else %}&copy; {% now "Y" %} République Démocratique du Congo{% endif %}</small>
         </div>
     </div>
 </div>

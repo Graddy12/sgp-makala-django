@@ -1,12 +1,14 @@
 {% extends 'base.html' %}
 {% block title %}{{ cellule.code_cellule }} — {{ APP_NAME }}{% endblock %}
 {% block content %}
-<div class="mb-4">
+<div class="page-header">
+    <div>
     <a href="{% url 'prison:cellules' %}" class="small text-decoration-none">← Cellules</a>
     <h1 class="h3 fw-bold font-outfit mt-2">{{ cellule.code_cellule }}</h1>
-    <p class="text-muted mb-1">{{ cellule.pavillon }} · {{ cellule.bloc }} · <span class="badge {{ cellule.badge_class }}">{{ cellule.get_statut_display }}</span></p>
+    <p class="text-muted mb-1">{{ cellule.pavillon }} · {{ cellule.bloc }} · {% if cellule.statut == 'maintenance' or cellule.statut == 'isolement' %}<span class="badge {{ cellule.badge_class }}">{{ cellule.get_statut_display }}</span>{% elif cellule.occupation >= cellule.capacite_max %}<span class="badge bg-danger">Pleine</span>{% else %}<span class="badge bg-success">Disponible</span>{% endif %}</p>
     <p class="mb-0">Occupation : <strong>{{ cellule.occupation }}/{{ cellule.capacite_max }}</strong></p>
     {% if cellule.description %}<p class="small text-muted mt-2">{{ cellule.description }}</p>{% endif %}
+    </div>
 </div>
 <div class="card border-0 shadow-sm rounded-4">
     <div class="card-header bg-white"><strong>Occupants</strong></div>
@@ -17,7 +19,7 @@
             {% for d in occupants %}
             <tr>
                 <td><a href="{% url 'prison:detenus_show' d.pk %}">{{ d.matricule }}</a></td>
-                <td>{{ d.full_name }}</td>
+                <td><div class="d-flex align-items-center gap-3">{% include 'partials/detenu_avatar.html' with detenu=d %}<span>{{ d.full_name }}</span></div></td>
                 <td><span class="badge {{ d.badge_statut }}">{{ d.get_statut_judiciaire_display }}</span></td>
             </tr>
             {% empty %}

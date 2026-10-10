@@ -1,6 +1,9 @@
-"""PDF generation with ReportLab (fiche écrou + rapport global)."""
+"""Generate readable detention records and statistical reports with ReportLab."""
 from io import BytesIO
+from pathlib import Path
+from xml.sax.saxutils import escape
 
+from django.conf import settings
 from django.http import HttpResponse
 from django.utils import timezone
 from reportlab.lib import colors
@@ -8,7 +11,7 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 
 def _styles():
@@ -16,35 +19,62 @@ def _styles():
     styles.add(ParagraphStyle(name='TitleFR', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=14))
     styles.add(ParagraphStyle(name='SubFR', parent=styles['Normal'], alignment=TA_CENTER, fontSize=10, textColor=colors.grey))
     styles.add(ParagraphStyle(name='BodyFR', parent=styles['Normal'], alignment=TA_LEFT, fontSize=10, leading=14))
+    styles.add(ParagraphStyle(name='LabelFR', parent=styles['BodyFR'], fontName='Helvetica-Bold'))
+    styles.add(ParagraphStyle(name='TableFR', parent=styles['BodyFR'], fontSize=8, leading=11, splitLongWords=True))
+    styles.add(ParagraphStyle(name='HeaderFR', parent=styles['TableFR'], fontName='Helvetica-Bold', textColor=colors.white))
+    styles.add(ParagraphStyle(name='DemoFR', parent=styles['SubFR'], fontName='Helvetica-Bold', textColor=colors.HexColor('#9A3412')))
     return styles
 
 
-def fiche_ecrou_pdf(detenu):
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=1.5 * cm, rightMargin=1.5 * cm)
-    styles = _styles()
-    story = [
-        Paragraph('RÉPUBLIQUE DÉMOCRATIQUE DU CONGO', styles['SubFR']),
-        Paragraph('Prison Centrale de Makala — Fiche d\'Écrou', styles['TitleFR']),
-        Spacer(1, 0.5 * cm),
-    ]
-    data = [
-        ['Matricule', detenu.matricule],
-        ['Nom complet', detenu.full_name],
-        ['Date / lieu naissance', f'{detenu.date_naissance} — {detenu.lieu_naissance}'],
-        ['Genre / Nationalité', f'{detenu.get_genre_display()} / {detenu.nationalite}'],
-        ['État civil', detenu.get_etat_civil_display()],
-        ['Statut judiciaire', detenu.get_statut_judiciaire_display()],
-        ['Dangerosité', detenu.get_niveau_dangerosite_display()],
-        ['Date d\'écrou', timezone.localtime(detenu.date_ecrou).strftime('%d/%m/%Y %H:%M')],
-        ['Cellule', detenu.cellule.code_cellule if detenu.cellule else '—'],
-        ['Motif d\'inculpation', detenu.motif_inculpation],
-        ['Libération prévue', str(detenu.date_liberation_prevue or '—')],
-    ]
-    table = Table(data, colWidths=[5 * cm, 12 * cm])
+def _paragraph(value, style):
+    # ReportLab Paragraph parses XML; names and verdicts must remain plain text.
+    text = '' if value is None else str(value)
+    return Paragraph(escape(text).replace('\n', '<br/>'), style)
+
+
+def _demo_notice(styles):
+    if getattr(settings, 'DEMO_MODE', False):
+        return [_paragraph('DÉMONSTRATION — Données entièrement fictives', styles['DemoFR']), Spacer(1, 0.25 * cm)]
+    return []
+
+
+def _page_footer(canvas, doc):
+    canvas.saveState()
+    canvas.setFont('Helvetica', 8)
+    canvas.setFillColor(colors.HexColor('#64748B'))
+    if getattr(settings, 'DEMO_MODE', False):
+        canvas.drawString(doc.leftMargin, 0.6 * cm, 'DÉMO — DONNÉES FICTIVES')
+    canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, 0.6 * cm, f'SGP Makala | Page {doc.page}')
+    canvas.restoreState()
+
+
+def _photo_path(detenu):
+    filename = str(detenu.photo or '')
+    if not filename:
+        return None
+    photo_root = (Path(settings.MEDIA_ROOT) / 'photos').resolve()
+    path = (photo_root / filename).resolve()
+    if path.parent != photo_root or not path.is_file():
+        return None
+    return path
+
+
+def _photo(detenu, styles):
+    path = _photo_path(detenu)
+    if path:
+        try:
+            return Image(str(path), width=3.2 * cm, height=3.2 * cm, kind='proportional', hAlign='RIGHT', lazy=0)
+        except (OSError, ValueError):
+            # An old or damaged upload must not prevent the record from exporting.
+            pass
+    return _paragraph('Photo non disponible', styles['SubFR'])
+
+
+def _detail_table(rows, width, styles):
+    data = [[_paragraph(label, styles['LabelFR']), _paragraph(value, styles['BodyFR'])] for label, value in rows]
+    table = Table(data, colWidths=[4.8 * cm, width - 4.8 * cm])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#F1F5F9')),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
         ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#CBD5E1')),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('LEFTPADDING', (0, 0), (-1, -1), 6),
@@ -52,15 +82,73 @@ def fiche_ecrou_pdf(detenu):
         ('TOPPADDING', (0, 0), (-1, -1), 6),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
     ]))
-    story.append(table)
-    story.append(Spacer(1, 1 * cm))
-    story.append(Paragraph(
-        f'Document généré le {timezone.localtime().strftime("%d/%m/%Y %H:%M")} — SGP Makala',
-        styles['SubFR'],
+    return table
+
+
+def fiche_ecrou_pdf(detenu):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=1.5 * cm, rightMargin=1.5 * cm)
+    styles = _styles()
+    story = [
+        _paragraph('RÉPUBLIQUE DÉMOCRATIQUE DU CONGO', styles['SubFR']),
+        _paragraph("Prison Centrale de Makala — Fiche d'Écrou", styles['TitleFR']),
+        *_demo_notice(styles),
+        Spacer(1, 0.3 * cm),
+    ]
+    identity = Table([
+        [_paragraph(detenu.full_name, styles['Heading2']), _photo(detenu, styles)],
+    ], colWidths=[doc.width - 3.6 * cm, 3.6 * cm])
+    identity.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+    ]))
+    story.extend([identity, Spacer(1, 0.3 * cm)])
+    data = [
+        ['Matricule', detenu.matricule],
+        ['Nom complet', detenu.full_name],
+        ['Date / lieu naissance', f'{detenu.date_naissance:%d/%m/%Y} — {detenu.lieu_naissance}'],
+        ['Genre / Nationalité', f'{detenu.get_genre_display()} / {detenu.nationalite}'],
+        ['État civil', detenu.get_etat_civil_display()],
+        ['Statut judiciaire', detenu.get_statut_judiciaire_display()],
+        ['Dangerosité', detenu.get_niveau_dangerosite_display()],
+        ["Date d'écrou", timezone.localtime(detenu.date_ecrou).strftime('%d/%m/%Y %H:%M')],
+        ['Cellule', detenu.cellule.code_cellule if detenu.cellule else '—'],
+        ['Libération prévue', detenu.date_liberation_prevue.strftime('%d/%m/%Y') if detenu.date_liberation_prevue else '—'],
+    ]
+    story.extend([
+        _detail_table(data, doc.width, styles),
+        Spacer(1, 0.3 * cm),
+        _paragraph("Motif d'inculpation", styles['Heading3']),
+        _paragraph(detenu.motif_inculpation, styles['BodyFR']),
+        Spacer(1, 0.4 * cm),
+        _paragraph('Historique des jugements', styles['Heading2']),
+    ])
+    jugements = list(detenu.jugements.all())
+    if not jugements:
+        story.append(_paragraph('Aucun jugement enregistré.', styles['BodyFR']))
+    for jugement in jugements:
+        story.append(_paragraph(
+            f'{jugement.date_jugement:%d/%m/%Y} — Dossier {jugement.numero_dossier}', styles['Heading3'],
+        ))
+        peine = f'{jugement.peine_ans} an(s), {jugement.peine_mois} mois ; amende : {jugement.peine_amende} USD'
+        story.extend([
+            _detail_table([
+                ['Tribunal', jugement.tribunal],
+                ['Décision', jugement.get_type_decision_display()],
+                ['Peine prononcée', peine],
+                ['Juge', jugement.juge_nom or '—'],
+            ], doc.width, styles),
+            Spacer(1, 0.2 * cm),
+            _paragraph('Résumé du verdict', styles['LabelFR']),
+            _paragraph(jugement.resume_verdict, styles['BodyFR']),
+            Spacer(1, 0.3 * cm),
+        ])
+    story.append(_paragraph(
+        f'Document généré le {timezone.localtime().strftime("%d/%m/%Y %H:%M")} — SGP Makala', styles['SubFR'],
     ))
-    doc.build(story)
-    buffer.seek(0)
-    response = HttpResponse(buffer, content_type='application/pdf')
+    doc.build(story, onFirstPage=_page_footer, onLaterPages=_page_footer)
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename="fiche_{detenu.matricule}.pdf"'
     return response
 
@@ -73,33 +161,33 @@ def rapport_global_pdf(stats_rows, kpis):
     )
     styles = _styles()
     story = [
-        Paragraph('Prison Centrale de Makala — Rapport Statistique Général', styles['TitleFR']),
-        Paragraph(timezone.localtime().strftime('%d/%m/%Y %H:%M'), styles['SubFR']),
+        _paragraph('Prison Centrale de Makala — Rapport Statistique Général', styles['TitleFR']),
+        *_demo_notice(styles),
+        _paragraph(timezone.localtime().strftime('%d/%m/%Y %H:%M'), styles['SubFR']),
         Spacer(1, 0.4 * cm),
-        Paragraph(
-            f"Effectif: {kpis['total']} | Prévenus: {kpis['prevenus']} | "
-            f"Condamnés: {kpis['condamnes']} | Occupation: {kpis['occupation']}%",
-            styles['BodyFR'],
+        _paragraph(
+            f"Effectif : {kpis['total']} | Prévenus : {kpis['prevenus']} | "
+            f"Condamnés : {kpis['condamnes']} | Occupation : {kpis['occupation']}%", styles['BodyFR'],
         ),
         Spacer(1, 0.4 * cm),
     ]
     header = ['Matricule', 'Nom', 'Statut', 'Dangerosité', 'Cellule', 'Date écrou']
-    data = [header] + stats_rows
-    table = Table(data, repeatRows=1)
+    data = [[_paragraph(value, styles['HeaderFR']) for value in header]]
+    data.extend([[_paragraph(value, styles['TableFR']) for value in row] for row in stats_rows])
+    # Fixed shares of the printable width prevent long names from widening the page.
+    table = Table(data, repeatRows=1, colWidths=[doc.width * share for share in (0.16, 0.30, 0.12, 0.12, 0.18, 0.12)])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0F172A')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 8),
         ('GRID', (0, 0), (-1, -1), 0.3, colors.HexColor('#CBD5E1')),
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8FAFC')]),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
         ('TOPPADDING', (0, 0), (-1, -1), 4),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
     ]))
     story.append(table)
-    doc.build(story)
-    buffer.seek(0)
-    response = HttpResponse(buffer, content_type='application/pdf')
+    doc.build(story, onFirstPage=_page_footer, onLaterPages=_page_footer)
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
     response['Content-Disposition'] = 'inline; filename="rapport_sgp_makala.pdf"'
     return response

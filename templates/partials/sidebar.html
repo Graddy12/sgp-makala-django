@@ -1,4 +1,4 @@
-<aside id="sidebar">
+<aside id="sidebar" aria-label="Navigation principale">
     <div class="sidebar-brand">
         <a href="{% url 'core:dashboard' %}" class="d-flex align-items-center text-white text-decoration-none">
             <div class="d-flex align-items-center justify-content-center bg-primary text-white rounded-3 me-2 flex-shrink-0" style="width:40px;height:40px;">
@@ -10,7 +10,7 @@
             </div>
         </a>
     </div>
-    <nav class="sidebar-nav">
+    <nav class="sidebar-nav" aria-label="Modules">
         <div class="sidebar-section-label">Principal</div>
         <li class="nav-item list-unstyled">
             <a href="{% url 'core:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
@@ -77,7 +77,7 @@
         {% endif %}
     </nav>
 
-    <div class="mt-auto p-3 border-top" style="border-color: rgba(255,255,255,0.08) !important;">
+    <div class="sidebar-user mt-auto p-3 border-top" style="border-color: rgba(255,255,255,0.08) !important;">
         <div class="dropdown">
             <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle gap-2 p-2 rounded-3" id="sidebarUserMenu" data-bs-toggle="dropdown">
                 <div class="d-flex align-items-center justify-content-center bg-primary text-white rounded-circle fw-bold flex-shrink-0" style="width:36px;height:36px;font-size:0.9rem;">

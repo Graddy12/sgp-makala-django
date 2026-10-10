@@ -1,11 +1,14 @@
 from django.urls import path
 from . import views
+from . import demo
 
 app_name = 'prison'
 
 urlpatterns = [
     path('detenus/', views.detenus_list, name='detenus'),
     path('detenus/create/', views.detenus_create, name='detenus_create'),
+    path('detenus/import-json/', demo.enrollment_import, name='detenus_import'),
+    path('detenus/demo-enrollment.json', demo.enrollment_sample, name='demo_enrollment_sample'),
     path('detenus/<int:pk>/', views.detenus_show, name='detenus_show'),
     path('detenus/<int:pk>/edit/', views.detenus_edit, name='detenus_edit'),
     path('detenus/<int:pk>/archive/', views.detenus_archive, name='detenus_archive'),

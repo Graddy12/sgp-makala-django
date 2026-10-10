@@ -1,29 +1,42 @@
 {% extends 'base.html' %}
 {% block title %}Rapports — {{ APP_NAME }}{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 fw-bold font-outfit mb-1">Rapports Statistiques</h1>
-        <p class="text-muted mb-0">Synthèse de la population carcérale</p>
-    </div>
-    <a href="{% url 'core:reports_pdf' %}" target="_blank" class="btn btn-danger rounded-3"><i class="bi bi-file-earmark-pdf me-1"></i> PDF</a>
+<div class="page-header">
+    <div><h1 class="h3 fw-bold font-outfit mb-1">Rapports statistiques</h1><p class="text-muted mb-0">Synthèse des dossiers et documents à présenter</p></div>
+    <a href="{% url 'core:reports_pdf' %}" target="_blank" rel="noopener" class="btn btn-primary"><i class="bi bi-download me-1" aria-hidden="true"></i> Rapport général PDF</a>
 </div>
 <div class="row g-3 mb-4">
-    <div class="col-md-3"><div class="card p-3 shadow-sm border-0"><div class="text-muted small">Total</div><div class="h3 fw-bold">{{ total }}</div></div></div>
-    <div class="col-md-3"><div class="card p-3 shadow-sm border-0"><div class="text-muted small">Prévenus</div><div class="h3 fw-bold">{{ prevenus }}</div></div></div>
-    <div class="col-md-3"><div class="card p-3 shadow-sm border-0"><div class="text-muted small">Condamnés</div><div class="h3 fw-bold">{{ condamnes }}</div></div></div>
-    <div class="col-md-3"><div class="card p-3 shadow-sm border-0"><div class="text-muted small">Libérés</div><div class="h3 fw-bold">{{ liberes }}</div></div></div>
+    <div class="col-6 col-lg-3"><div class="card p-3 shadow-sm border-0 mb-0"><div class="text-muted small">Dossiers non archivés</div><div class="h3 fw-bold mb-0">{{ total }}</div></div></div>
+    <div class="col-6 col-lg-3"><div class="card p-3 shadow-sm border-0 mb-0"><div class="text-muted small">Prévenus</div><div class="h3 fw-bold mb-0">{{ prevenus }}</div></div></div>
+    <div class="col-6 col-lg-3"><div class="card p-3 shadow-sm border-0 mb-0"><div class="text-muted small">Condamnés</div><div class="h3 fw-bold mb-0">{{ condamnes }}</div></div></div>
+    <div class="col-6 col-lg-3"><div class="card p-3 shadow-sm border-0 mb-0"><div class="text-muted small">Libérés</div><div class="h3 fw-bold mb-0">{{ liberes }}</div></div></div>
 </div>
-<div class="card shadow-sm border-0">
-    <div class="table-responsive">
-        <table class="table mb-0">
-            <thead><tr><th>Statut</th><th>Effectif</th></tr></thead>
-            <tbody>
-            {% for row in by_statut %}
-            <tr><td>{{ row.statut_judiciaire }}</td><td>{{ row.total }}</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card p-4 h-100 report-card">
+        <div class="icon-box bg-primary-subtle text-primary mb-3"><i class="bi bi-file-earmark-pdf" aria-hidden="true"></i></div>
+        <h2 class="h6 fw-bold">Rapport récapitulatif</h2><p class="text-muted small flex-grow-1">Liste nominale, statuts judiciaires et affectations des dossiers non archivés.</p>
+        <a href="{% url 'core:reports_pdf' %}" target="_blank" rel="noopener" class="btn btn-primary">Générer le PDF</a>
+    </div></div>
+    <div class="col-md-4"><div class="card p-4 h-100 report-card">
+        <div class="icon-box bg-info-subtle text-info mb-3"><i class="bi bi-person-vcard" aria-hidden="true"></i></div>
+        <h2 class="h6 fw-bold">Fiche d'écrou individuelle</h2><p class="text-muted small flex-grow-1">Ouvrez un dossier pour consulter l'identité, le portrait et imprimer sa fiche.</p>
+        <a href="{% url 'prison:detenus' %}" class="btn btn-outline-primary">Sélectionner un détenu</a>
+    </div></div>
+    <div class="col-md-4"><div class="card p-4 h-100 report-card">
+        <div class="icon-box bg-success-subtle text-success mb-3"><i class="bi bi-bar-chart" aria-hidden="true"></i></div>
+        <h2 class="h6 fw-bold">Occupation et effectifs</h2><p class="text-muted small flex-grow-1">{{ cellules }} cellule(s) suivie(s). Consultez les répartitions et les places disponibles.</p>
+        <a href="{% url 'core:dashboard' %}" class="btn btn-outline-success">Consulter le tableau de bord</a>
+    </div></div>
 </div>
+<div class="card shadow-sm border-0 p-4">
+    <h2 class="h6 fw-bold mb-3">Répartition des dossiers du registre</h2>
+    <ul class="stat-chart list-unstyled mb-0">
+        {% for row in by_statut %}
+        <li class="stat-row"><div class="d-flex justify-content-between gap-2 small mb-1"><span>{{ row.label|default:row.statut_judiciaire|capfirst }}</span><strong>{{ row.total }}</strong></div><div class="stat-track"><div class="stat-fill status-{{ row.statut_judiciaire }}" style="width:{{ row.percent|stringformat:'s' }}%"></div></div></li>
+        {% empty %}<li class="text-muted">Aucun dossier à représenter.</li>{% endfor %}
+    </ul>
+</div>
+{% if demo_mode and user.can_write_detenus %}
+<div class="demo-notice"><i class="bi bi-filetype-json" aria-hidden="true"></i> Enrôlement de démonstration : <a href="{% url 'prison:demo_enrollment_sample' %}">télécharger le modèle JSON</a> puis <a href="{% url 'prison:detenus_import' %}">importer un dossier</a>.</div>
+{% endif %}
 {% endblock %}

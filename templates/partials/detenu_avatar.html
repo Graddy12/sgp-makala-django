@@ -1,0 +1,5 @@
+{% if detenu.photo and detenu.photo != 'default_detenu.png' %}
+<img src="{% url 'core:media_photo' detenu.photo %}" alt="Portrait de {{ detenu.full_name }}" class="avatar-detenu" loading="lazy" width="44" height="44">
+{% else %}
+<span class="avatar-detenu avatar-placeholder" aria-label="Portrait non disponible"><i class="bi bi-person" aria-hidden="true"></i></span>
+{% endif %}

@@ -4,6 +4,7 @@
 <div class="card shadow-sm border-0 p-4 rounded-4" style="max-width:560px;">
     <h1 class="h4 fw-bold font-outfit mb-2">Sauvegarde de la base de données</h1>
     <p class="text-muted">Téléchargez une copie complète du fichier SQLite (<code>db.sqlite3</code>).</p>
+    {% if demo_mode %}<div class="demo-notice mb-3">Les ajouts de cette session peuvent être perdus au redémarrage. Téléchargez une sauvegarde après la démonstration.</div>{% endif %}
     <form method="post" action="{% url 'core:backup_export' %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-primary rounded-3"><i class="bi bi-download me-1"></i> Télécharger la sauvegarde</button>

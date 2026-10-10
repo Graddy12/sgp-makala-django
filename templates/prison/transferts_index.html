@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% block title %}Transferts — {{ APP_NAME }}{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between mb-4">
-    <h1 class="h3 fw-bold font-outfit mb-0">Transferts</h1>
+<div class="page-header">
+    <div><h1 class="h3 fw-bold font-outfit mb-1">Transferts de détenus</h1><p class="text-muted mb-0">Mouvements entre établissements · {{ page_obj.paginator.count }} transfert(s)</p></div>
     {% if user.can_write_transferts %}
     <a href="{% url 'prison:transferts_create' %}" class="btn btn-primary rounded-3">Planifier</a>
     {% endif %}
@@ -10,22 +10,22 @@
 <div class="card border-0 shadow-sm rounded-4">
     <div class="table-responsive">
         <table class="table align-middle mb-0">
-            <thead><tr><th>Détenu</th><th>Destination</th><th>Date</th><th>Statut</th><th></th></tr></thead>
+            <thead><tr><th scope="col">Détenu</th><th scope="col">Destination / motif</th><th scope="col">Date</th><th scope="col">Statut</th><th scope="col">Actions</th></tr></thead>
             <tbody>
             {% for t in transferts %}
             <tr>
-                <td><a href="{% url 'prison:detenus_show' t.detenu_id %}">{{ t.detenu.matricule }}</a></td>
-                <td>{{ t.etablissement_destination }}</td>
+                <td><a href="{% url 'prison:detenus_show' t.detenu_id %}">{{ t.detenu.full_name }}</a><div class="small text-muted">{{ t.detenu.matricule }}</div></td>
+                <td><div class="fw-semibold">{{ t.etablissement_destination }}</div><div class="small text-muted">{{ t.motif_transfert }}</div></td>
                 <td>{{ t.date_transfert|date:"d/m/Y" }}</td>
-                <td>{{ t.get_statut_display }}</td>
+                <td><span class="badge {% if t.statut == 'effectue' %}bg-success{% elif t.statut == 'annule' %}bg-secondary{% else %}bg-primary{% endif %}">{{ t.get_statut_display }}</span></td>
                 <td>
                     {% if user.can_write_transferts and t.statut != 'effectue' and t.statut != 'annule' %}
                     <form method="post" action="{% url 'prison:transferts_status' t.pk %}" class="d-flex gap-1">
                         {% csrf_token %}
-                        <select name="statut" class="form-select form-select-sm">
+                        <select name="statut" class="form-select form-select-sm" aria-label="Statut du transfert de {{ t.detenu.full_name }}">
                             {% for v,l in StatutTransfert.choices %}<option value="{{ v }}" {% if t.statut == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
                         </select>
-                        <button class="btn btn-sm btn-outline-primary">OK</button>
+                        <button class="btn btn-sm btn-outline-primary">Valider</button>
                     </form>
                     {% endif %}
                 </td>
@@ -37,4 +37,5 @@
         </table>
     </div>
 </div>
+{% include 'partials/pagination.html' %}
 {% endblock %}

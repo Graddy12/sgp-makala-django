@@ -7,7 +7,6 @@
 /* --------------------------------------------------------------------------
    1. IMPORT GOOGLE FONTS (fallback si la balise head n'a pas chargé)
    -------------------------------------------------------------------------- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap');
 
 /* --------------------------------------------------------------------------
    2. VARIABLES GLOBALES – DESIGN TOKENS
@@ -117,9 +116,10 @@ body {
     left: 0;
     width: var(--sidebar-width);
     height: 100vh;
+    height: 100dvh;
     background-color: var(--sidebar-bg);
     z-index: 1050;
-    overflow-y: auto;
+    overflow-y: hidden;
     overflow-x: hidden;
     transition: transform var(--duration-normal) var(--ease-out),
                 width var(--duration-normal) var(--ease-out);
@@ -140,6 +140,7 @@ body {
       S'étend sur tout l'espace restant. Ne chevauche jamais le sidebar.
    -------------------------------------------------------------------------- */
 .main-content {
+    min-width: 0;
     margin-left: var(--sidebar-width);
     width: calc(100% - var(--sidebar-width));
     min-height: 100vh;
@@ -218,6 +219,7 @@ body.sidebar-collapsed .main-content {
 
 .sidebar-nav {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
     padding: 0.5rem 0.75rem;
@@ -349,7 +351,7 @@ body.sidebar-collapsed .main-content {
 .table {
     width: 100%;
     margin-bottom: 0;
-    white-space: nowrap;
+    white-space: normal;
     font-size: 0.875rem;
 }
 
@@ -370,6 +372,7 @@ body.sidebar-collapsed .main-content {
     vertical-align: middle;
     border-bottom: 1px solid var(--color-navy-100);
     color: var(--color-navy-700);
+    overflow-wrap: anywhere;
 }
 
 .table-hover tbody tr {
@@ -595,6 +598,63 @@ body.sidebar-collapsed .main-content {
     font-size: 0.825rem;
     color: var(--color-navy-400);
     margin-top: 0.2rem;
+}
+
+/* Demo layouts: readable tables, native charts and accessible navigation. */
+.sidebar-user { flex-shrink: 0; }
+#sidebar .sidebar-nav { scrollbar-color: #64748b #0f172a; scrollbar-width: thin; }
+.sidebar-backdrop { position: fixed; inset: 0; border: 0; background: rgba(15, 23, 42, .45); z-index: 1040; }
+.sidebar-backdrop[hidden] { display: none; }
+.skip-link { position: fixed; top: -100px; left: 1rem; padding: .7rem 1rem; background: white; border-radius: .5rem; z-index: 1100; }
+.skip-link:focus { top: 1rem; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid #60a5fa; outline-offset: 3px; }
+.page-header > div { min-width: 0; }
+.page-header p { font-size: .875rem; }
+.card { min-width: 0; }
+.row > div > .card.h-100 { margin-bottom: 0; }
+.table-responsive { border-radius: inherit; scrollbar-width: auto; }
+.table-responsive:focus-visible { outline: 3px solid #60a5fa; outline-offset: 2px; }
+.table-responsive > .table { min-width: 560px; }
+.table-responsive > .registry-table { min-width: 740px; }
+.table thead th, .table tbody td { padding: .85rem 1rem; }
+.table thead th { white-space: normal; }
+.table .badge { white-space: normal; line-height: 1.4; }
+.table form { min-width: 155px; }
+.table .btn { white-space: nowrap; }
+.table-scroll-hint { font-size: .75rem; color: #64748b; padding: .5rem 1rem; border-bottom: 1px solid #e2e8f0; }
+.avatar-placeholder { display: inline-flex; align-items: center; justify-content: center; background: #eff6ff; color: #64748b; font-size: 1.35rem; }
+.avatar-detenu { background-color: #f1f5f9; }
+.demo-notice { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; color: #475569; font-size: .75rem; background: #eef4ff; border: 1px solid #dbe6fb; border-radius: .65rem; padding: .65rem .85rem; }
+.stat-row + .stat-row { margin-top: 1.15rem; }
+.stat-row strong { white-space: nowrap; }
+.stat-track { height: 12px; border-radius: 20px; overflow: hidden; background: #eef2f6; }
+.stat-fill { height: 100%; min-width: 0; max-width: 100%; border-radius: inherit; background: #2563eb; }
+.status-prevenu { background: #f59e0b; }
+.status-condamne { background: #e44757; }
+.status-libere { background: #16a578; }
+.status-transfere { background: #0891b2; }
+.status-decede, .status-archive { background: #64748b; }
+.danger-faible { background: #16a578; }
+.danger-moyen { background: #2563eb; }
+.danger-eleve { background: #f59e0b; }
+.danger-critique { background: #e44757; }
+.activity-time { font-size: .72rem; color: #64748b; }
+.report-card { display: flex; flex-direction: column; }
+details > summary { cursor: pointer; }
+.photo-preview { display: block; width: 110px; height: 130px; object-fit: cover; border-radius: .75rem; border: 1px solid #e2e8f0; margin-top: .75rem; }
+
+@media (max-width: 575.98px) {
+    .main-content > header.navbar { padding: .65rem .8rem !important; gap: .5rem; }
+    .navbar-role { max-width: 115px; white-space: normal; line-height: 1.3; font-size: .65rem; }
+    .page-header { padding: 1.1rem; }
+    .page-header h1 { font-size: 1.25rem; }
+    .page-header > .btn, .page-header > div:last-child:not(:first-child) { max-width: 100%; }
+    .main-content > main { padding: 1rem .75rem; }
+    body.sidebar-mobile-open { overflow: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 
 /* --------------------------------------------------------------------------

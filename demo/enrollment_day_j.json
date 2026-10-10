@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "fictional": true,
+  "detenu": {
+    "nom": "KASONGO",
+    "postnom": "MUSALA",
+    "prenom": "David",
+    "date_naissance": "1994-05-17",
+    "lieu_naissance": "Kinshasa",
+    "genre": "M",
+    "nationalite": "Congolaise (RDC)",
+    "etat_civil": "celibataire",
+    "adresse": "Avenue de démonstration 12, Lemba, Kinshasa",
+    "statut_judiciaire": "prevenu",
+    "niveau_dangerosite": "faible",
+    "motif_inculpation": "Abus de confiance — dossier entièrement fictif réservé à la démonstration du jour J.",
+    "cellule_code": "DEMO-P01-C02",
+    "portrait": "demo/portraits/portrait_m_01.jpg"
+  }
+}

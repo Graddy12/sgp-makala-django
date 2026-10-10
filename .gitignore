@@ -10,6 +10,8 @@ media/documents/*
 !media/photos/.gitkeep
 !media/documents/.gitkeep
 staticfiles/
+tmp/
+test-results/
 .DS_Store
 *.log
 .idea/

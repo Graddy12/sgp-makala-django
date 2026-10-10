@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% block title %}Jugements — {{ APP_NAME }}{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between mb-4">
-    <h1 class="h3 fw-bold font-outfit mb-0">Jugements &amp; Peines</h1>
+<div class="page-header">
+    <div><h1 class="h3 fw-bold font-outfit mb-1">Jugements &amp; peines</h1><p class="text-muted mb-0">Décisions de justice, peines et échéances · {{ page_obj.paginator.count }} jugement(s)</p></div>
     {% if user.can_write_detenus %}
     <a href="{% url 'prison:jugements_create' %}" class="btn btn-primary rounded-3">Nouveau jugement</a>
     {% endif %}
@@ -10,15 +10,15 @@
 <div class="card border-0 shadow-sm rounded-4">
     <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle">
-            <thead><tr><th>Dossier</th><th>Détenu</th><th>Tribunal</th><th>Décision</th><th>Date</th></tr></thead>
+            <thead><tr><th scope="col">Dossier / date</th><th scope="col">Détenu</th><th scope="col">Tribunal</th><th scope="col">Décision</th><th scope="col">Peine prononcée</th></tr></thead>
             <tbody>
             {% for j in jugements %}
             <tr>
-                <td>{{ j.numero_dossier }}</td>
-                <td><a href="{% url 'prison:detenus_show' j.detenu_id %}">{{ j.detenu.matricule }}</a></td>
+                <td><strong class="text-primary">{{ j.numero_dossier }}</strong><div class="small text-muted">{{ j.date_jugement|date:"d/m/Y" }}</div></td>
+                <td><a href="{% url 'prison:detenus_show' j.detenu_id %}">{{ j.detenu.full_name }}</a><div class="small text-muted">{{ j.detenu.matricule }}</div></td>
                 <td>{{ j.tribunal }}</td>
-                <td>{{ j.get_type_decision_display }}</td>
-                <td>{{ j.date_jugement|date:"d/m/Y" }}</td>
+                <td><span class="badge bg-secondary">{{ j.get_type_decision_display }}</span></td>
+                <td>{% if j.type_decision == 'condamnation' %}<div class="fw-semibold">{{ j.peine_ans }} an(s) {{ j.peine_mois }} mois</div>{% if j.peine_amende %}<div class="small text-muted">Amende : {{ j.peine_amende }} USD</div>{% endif %}{% else %}—{% endif %}</td>
             </tr>
             {% empty %}
             <tr><td colspan="5" class="text-center text-muted py-4">Aucun jugement</td></tr>
@@ -27,4 +27,5 @@
         </table>
     </div>
 </div>
+{% include 'partials/pagination.html' %}
 {% endblock %}

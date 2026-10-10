@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -10,7 +11,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from accounts.models import Role
 from core.decorators import role_required
 from core.pdf import fiche_ecrou_pdf
-from core.utils import DOC_EXTS, MAX_DOC, MAX_PHOTO, PHOTO_EXTS, log_audit, save_upload
+from core.utils import DOC_EXTS, MAX_DOC, MAX_PHOTO, PHOTO_EXTS, log_audit, save_upload, paginated_context
 from prison.models import (
     Cellule, Detenu, DocumentJudiciaire, Jugement, StatutJudiciaire,
     StatutTransfert, StatutVisite, Transfert, TypeDocument, Visite,
@@ -50,10 +51,8 @@ def detenus_list(request):
     if date_ecrou:
         qs = qs.filter(date_ecrou__date=date_ecrou)
 
-    paginator = Paginator(qs, 10)
-    page = paginator.get_page(request.GET.get('page'))
     return render(request, 'prison/detenus_index.html', {
-        'page_obj': page,
+        **paginated_context(request, qs, 'detenus', per_page=15),
         'cellules': Cellule.objects.all(),
         'nationalites': Detenu.objects.exclude(nationalite='')
             .values_list('nationalite', flat=True).distinct().order_by('nationalite'),
@@ -132,6 +131,7 @@ def detenus_print(request, pk):
     return fiche_ecrou_pdf(detenu)
 
 
+@transaction.atomic
 def _save_detenu_from_post(request, detenu=None):
     nom = (request.POST.get('nom') or '').strip().upper()
     postnom = (request.POST.get('postnom') or '').strip().upper() or None
@@ -159,7 +159,16 @@ def _save_detenu_from_post(request, detenu=None):
     detenu.niveau_dangerosite = request.POST.get('niveau_dangerosite') or 'faible'
     detenu.motif_inculpation = motif
     cellule_id = request.POST.get('cellule_id') or ''
-    detenu.cellule_id = int(cellule_id) if cellule_id else None
+    previous_cellule_id = detenu.cellule_id
+    if cellule_id:
+        if not cellule_id.isdigit():
+            raise ValueError('Cellule invalide.')
+        cellule = Cellule.objects.filter(pk=cellule_id).first()
+        if not cellule or (cellule.pk != previous_cellule_id and not cellule.is_disponible):
+            raise ValueError('Cette cellule est indisponible ou pleine.')
+        detenu.cellule = cellule
+    else:
+        detenu.cellule = None
 
     if is_new:
         date_ecrou = request.POST.get('date_ecrou') or ''
@@ -169,6 +178,13 @@ def _save_detenu_from_post(request, detenu=None):
                 if timezone.is_naive(dt):
                     dt = timezone.make_aware(dt)
                 detenu.date_ecrou = dt
+
+    try:
+        detenu.full_clean()
+    except ValidationError as exc:
+        raise ValueError(' '.join(exc.messages)) from exc
+    if detenu.date_naissance > timezone.localdate():
+        raise ValueError('La date de naissance ne peut pas être dans le futur.')
 
     photo = request.FILES.get('photo')
     if photo:
@@ -241,8 +257,8 @@ def cellules_show(request, pk):
 
 @login_required
 def jugements_list(request):
-    jugements = Jugement.objects.select_related('detenu', 'created_by').all()[:200]
-    return render(request, 'prison/jugements_index.html', {'jugements': jugements})
+    jugements = Jugement.objects.select_related('detenu', 'created_by').all()
+    return render(request, 'prison/jugements_index.html', paginated_context(request, jugements, 'jugements'))
 
 
 @role_required(Role.ADMIN, Role.DIRECTEUR, Role.GREFFIER)
@@ -288,8 +304,8 @@ def jugements_create(request):
 
 @login_required
 def transferts_list(request):
-    transferts = Transfert.objects.select_related('detenu', 'autorise_par').all()[:200]
-    return render(request, 'prison/transferts_index.html', {'transferts': transferts})
+    transferts = Transfert.objects.select_related('detenu', 'autorise_par').all()
+    return render(request, 'prison/transferts_index.html', paginated_context(request, transferts, 'transferts'))
 
 
 @role_required(Role.ADMIN, Role.DIRECTEUR)
@@ -346,7 +362,7 @@ def visites_list(request):
     if detenu_id:
         qs = qs.filter(detenu_id=detenu_id)
     return render(request, 'prison/visites_index.html', {
-        'visites': qs[:200], 'filter_detenu_id': detenu_id,
+        **paginated_context(request, qs, 'visites'), 'filter_detenu_id': detenu_id,
     })
 
 
@@ -406,9 +422,9 @@ def visites_end(request, pk):
 
 @login_required
 def documents_list(request):
-    docs = DocumentJudiciaire.objects.select_related('detenu', 'uploade_par').all()[:200]
+    docs = DocumentJudiciaire.objects.select_related('detenu', 'uploade_par').all()
     return render(request, 'prison/documents_index.html', {
-        'documents': docs,
+        **paginated_context(request, docs, 'documents'),
         'detenus': Detenu.objects.exclude(statut_judiciaire=StatutJudiciaire.ARCHIVE),
         'doc_types': TypeDocument.choices,
     })

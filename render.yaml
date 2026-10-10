@@ -3,8 +3,12 @@ services:
     name: sgp-makala
     runtime: python
     plan: free
+    repo: https://github.com/Graddy12/SGP_MAKALA
+    branch: main
+    autoDeployTrigger: commit
+    healthCheckPath: /health/
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
-    startCommand: python manage.py migrate --noinput && python manage.py bootstrap_admin && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+    startCommand: bash scripts/start.sh
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.8
@@ -12,5 +16,7 @@ services:
         generateValue: true
       - key: DEBUG
         value: false
+      - key: DEMO_MODE
+        value: true
       - key: SGP_ADMIN_PASSWORD
         generateValue: true

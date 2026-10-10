@@ -1,16 +1,17 @@
 {% extends 'base.html' %}
 {% block title %}Audit — {{ APP_NAME }}{% endblock %}
 {% block content %}
-<h1 class="h3 fw-bold font-outfit mb-4">Journal d'Audit</h1>
-<form class="row g-2 mb-3" method="get">
-    <div class="col-md-4"><input type="text" name="search" value="{{ filter_search }}" class="form-control" placeholder="Rechercher…"></div>
+<div class="page-header"><div><h1 class="h3 fw-bold font-outfit mb-1">Journal d'audit</h1><p class="text-muted mb-0">Traçabilité des opérations et des accès · {{ page_obj.paginator.count }} événement(s)</p></div><button type="button" class="btn btn-outline-secondary" data-print><i class="bi bi-printer me-1" aria-hidden="true"></i> Imprimer cette page</button></div>
+<form class="row g-2 mb-3 no-print" method="get">
+    <div class="col-md-4"><input type="search" name="search" value="{{ filter_search }}" class="form-control" placeholder="Utilisateur, description, IP…" aria-label="Rechercher dans le journal"></div>
     <div class="col-md-3">
-        <select name="module" class="form-select">
+        <select name="module" class="form-select" aria-label="Filtrer par module">
             <option value="">Tous modules</option>
             {% for m in modules %}<option value="{{ m }}" {% if filter_module == m %}selected{% endif %}>{{ m }}</option>{% endfor %}
         </select>
     </div>
     <div class="col-md-2"><button class="btn btn-primary w-100">Filtrer</button></div>
+    {% if filter_search or filter_module %}<div class="col-md-2"><a class="btn btn-outline-secondary w-100" href="{% url 'core:audit' %}">Réinitialiser</a></div>{% endif %}
 </form>
 <div class="card shadow-sm border-0">
     <div class="table-responsive">
@@ -23,7 +24,7 @@
                 <td>{{ log.user_nom|default:"—" }}</td>
                 <td><code>{{ log.action }}</code></td>
                 <td>{{ log.module }}</td>
-                <td class="small">{{ log.description|truncatechars:100 }}</td>
+                <td class="small">{{ log.description }}</td>
                 <td class="small">{{ log.ip_address }}</td>
             </tr>
             {% empty %}
@@ -33,4 +34,5 @@
         </table>
     </div>
 </div>
+{% include 'partials/pagination.html' %}
 {% endblock %}

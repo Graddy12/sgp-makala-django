@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Enrôlement JSON — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="h3 fw-bold mb-1">Enrôler une personne depuis un JSON</h1><p class="text-muted mb-0">Préparez le dossier fictif, vérifiez son aperçu, puis enregistrez l’écrou.</p></div>
+  <a href="{% url 'prison:detenus' %}" class="btn btn-outline-secondary">Retour au registre</a>
+</div>
+<div class="row g-4">
+  <div class="col-lg-5"><div class="card rounded-4 p-4 h-100">
+    <h2 class="h5">Dossier de démonstration</h2>
+    <p class="text-muted">Utilisez l’exemple prêt pour le jour J, ou adaptez son nom, sa cellule et ses autres champs avant de l’importer. Les ajouts restent disponibles pendant la session de démo.</p>
+    <form method="post" class="mb-3">{% csrf_token %}<input type="hidden" name="action" value="sample"><button class="btn btn-primary w-100">Prévisualiser l’exemple du jour J</button></form>
+    <a href="{% url 'prison:demo_enrollment_sample' %}" class="btn btn-outline-primary w-100 mb-4">Télécharger l’exemple JSON</a>
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+      <label class="form-label" for="json-file">Votre fichier JSON (64 Ko maximum)</label>
+      <input type="file" id="json-file" name="json_file" accept=".json,application/json" class="form-control mb-3" required>
+      <button class="btn btn-outline-secondary w-100">Afficher l’aperçu</button>
+    </form>
+  </div></div>
+  <div class="col-lg-7"><div class="card rounded-4 p-4 h-100">
+    {% if preview %}
+    <div class="d-flex align-items-center gap-3 mb-4">{% if portrait %}<img src="{% static portrait %}" width="90" height="90" class="rounded-3" alt="Portrait généré de la personne fictive">{% endif %}<div><span class="badge bg-primary mb-2">Aperçu · aucune donnée enregistrée</span><h2 class="h4 mb-1">{{ preview.full_name }}</h2><span class="text-muted">{{ preview.matricule }}</span></div></div>
+    <dl class="row"><dt class="col-sm-4">Naissance</dt><dd class="col-sm-8">{{ preview.date_naissance|date:'d/m/Y' }} · {{ preview.lieu_naissance }}</dd><dt class="col-sm-4">Nationalité</dt><dd class="col-sm-8">{{ preview.nationalite }}</dd><dt class="col-sm-4">Genre</dt><dd class="col-sm-8">{{ preview.get_genre_display }}</dd><dt class="col-sm-4">Cellule</dt><dd class="col-sm-8">{{ preview.cellule.code_cellule|default:'Non affectée' }}</dd><dt class="col-sm-4">Statut</dt><dd class="col-sm-8">{{ preview.get_statut_judiciaire_display }}</dd><dt class="col-sm-4">Dangerosité</dt><dd class="col-sm-8">{{ preview.get_niveau_dangerosite_display }}</dd><dt class="col-sm-4">Motif</dt><dd class="col-sm-8">{{ preview.motif_inculpation }}</dd></dl>
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="confirm"><input type="hidden" name="token" value="{{ token }}"><button class="btn btn-success">Confirmer et enregistrer l’écrou</button></form>
+    {% else %}<div class="text-center my-auto py-5"><i class="bi bi-file-earmark-code display-4 text-primary"></i><h2 class="h5 mt-3">L’aperçu du dossier apparaîtra ici</h2><p class="text-muted">Chargez un JSON ou sélectionnez l’exemple pour commencer.</p></div>{% endif %}
+  </div></div>
+</div>
+{% endblock %}

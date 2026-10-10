@@ -1,16 +1,16 @@
 {% extends 'base.html' %}
 {% block title %}Tableau de bord — {{ APP_NAME }}{% endblock %}
 {% block content %}
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3 bg-white p-4 rounded-4 shadow-sm border">
+<div class="page-header">
     <div>
         <h1 class="h3 fw-bold font-outfit text-dark mb-1">Tableau de Bord Général</h1>
         <p class="text-muted mb-0">Aperçu en temps réel — {{ PRISON_NAME }}</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
         {% if user.can_write_detenus %}
         <a href="{% url 'prison:detenus_create' %}" class="btn btn-primary rounded-3 px-3"><i class="bi bi-person-plus-fill me-1"></i> Nouvel Écrou</a>
         {% endif %}
-        <a href="{% url 'core:reports_pdf' %}" target="_blank" class="btn btn-outline-secondary rounded-3 px-3"><i class="bi bi-file-earmark-pdf me-1"></i> Export PDF</a>
+        <a href="{% url 'core:reports_pdf' %}" target="_blank" rel="noopener" class="btn btn-outline-secondary rounded-3 px-3"><i class="bi bi-file-earmark-pdf me-1"></i> Export PDF</a>
     </div>
 </div>
 
@@ -19,8 +19,9 @@
         <div class="card card-kpi p-3 border-start border-4 border-primary">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
-                    <span class="text-muted text-uppercase fw-semibold small d-block mb-1">Effectif Total</span>
+                    <span class="text-muted text-uppercase fw-semibold small d-block mb-1">Sous écrou</span>
                     <h3 class="fw-bold font-outfit mb-0">{{ totalDetenus }}</h3>
+                    <small class="text-muted">Détenus actuellement présents</small>
                 </div>
                 <div class="icon-box bg-primary-subtle text-primary"><i class="bi bi-people-fill"></i></div>
             </div>
@@ -32,6 +33,7 @@
                 <div>
                     <span class="text-muted text-uppercase fw-semibold small d-block mb-1">Prévenus</span>
                     <h3 class="fw-bold font-outfit mb-0">{{ totalPrevenus }}</h3>
+                    <small class="text-muted">En attente de jugement</small>
                 </div>
                 <div class="icon-box bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></div>
             </div>
@@ -43,6 +45,7 @@
                 <div>
                     <span class="text-muted text-uppercase fw-semibold small d-block mb-1">Condamnés</span>
                     <h3 class="fw-bold font-outfit mb-0">{{ totalCondamnes }}</h3>
+                    <small class="text-muted">Sous condamnation</small>
                 </div>
                 <div class="icon-box bg-danger-subtle text-danger"><i class="bi bi-file-earmark-text-fill"></i></div>
             </div>
@@ -54,7 +57,7 @@
                 <div>
                     <span class="text-muted text-uppercase fw-semibold small d-block mb-1">Occupation</span>
                     <h3 class="fw-bold font-outfit mb-0">{{ tauxOccupation }}%</h3>
-                    <small class="text-muted">{{ visitesToday }} visite(s) aujourd'hui</small>
+                    <small class="text-muted">{{ occupationCount }} / {{ capaciteTotale }} places</small>
                 </div>
                 <div class="icon-box bg-success-subtle text-success"><i class="bi bi-pie-chart-fill"></i></div>
             </div>
@@ -64,15 +67,31 @@
 
 <div class="row g-3 mb-4">
     <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-4 p-3">
-            <h2 class="h6 fw-bold mb-3">Répartition par statut</h2>
-            <canvas id="chartStatut" height="180"></canvas>
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100 chart-card">
+            <h2 class="h6 fw-bold mb-1"><i class="bi bi-pie-chart text-primary me-2" aria-hidden="true"></i>Répartition par statut judiciaire</h2>
+            <p class="small text-muted mb-4">Ensemble des dossiers du registre</p>
+            <ul class="stat-chart list-unstyled mb-0" aria-label="Effectifs par statut judiciaire">
+                {% for row in by_statut %}
+                <li class="stat-row">
+                    <div class="d-flex justify-content-between gap-2 small mb-1"><span>{{ row.label }}</span><strong>{{ row.total }} <span class="text-muted fw-normal">({{ row.percent }}%)</span></strong></div>
+                    <div class="stat-track"><div class="stat-fill status-{{ row.statut_judiciaire }}" style="width:{{ row.percent|stringformat:'s' }}%"></div></div>
+                </li>
+                {% empty %}<li class="text-muted small py-4">Aucun dossier à représenter.</li>{% endfor %}
+            </ul>
         </div>
     </div>
     <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-4 p-3">
-            <h2 class="h6 fw-bold mb-3">Niveaux de dangerosité</h2>
-            <canvas id="chartDanger" height="180"></canvas>
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100 chart-card">
+            <h2 class="h6 fw-bold mb-1"><i class="bi bi-bar-chart text-primary me-2" aria-hidden="true"></i>Niveaux de dangerosité</h2>
+            <p class="small text-muted mb-4">Détenus actuellement sous écrou</p>
+            <ul class="stat-chart list-unstyled mb-0" aria-label="Effectifs par niveau de dangerosité">
+                {% for row in by_danger %}
+                <li class="stat-row">
+                    <div class="d-flex justify-content-between gap-2 small mb-1"><span>{{ row.label }}</span><strong>{{ row.total }} <span class="text-muted fw-normal">({{ row.percent }}%)</span></strong></div>
+                    <div class="stat-track"><div class="stat-fill danger-{{ row.niveau_dangerosite }}" style="width:{{ row.percent|stringformat:'s' }}%"></div></div>
+                </li>
+                {% empty %}<li class="text-muted small py-4">Aucune évaluation à représenter.</li>{% endfor %}
+            </ul>
         </div>
     </div>
 </div>
@@ -80,7 +99,7 @@
 <div class="row g-3">
     <div class="col-lg-7">
         <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header bg-white border-0 pt-3"><h2 class="h6 fw-bold mb-0">Derniers écroués</h2></div>
+            <div class="card-header bg-white border-0 pt-3 d-flex justify-content-between gap-2"><h2 class="h6 fw-bold mb-0">Derniers écroués</h2><a href="{% url 'prison:detenus' %}" class="small">Voir le registre</a></div>
             <div class="table-responsive">
                 <table class="table table-hover mb-0 align-middle">
                     <thead><tr><th>Matricule</th><th>Nom</th><th>Statut</th><th>Cellule</th></tr></thead>
@@ -88,7 +107,7 @@
                     {% for d in recent_detenus %}
                     <tr>
                         <td><a href="{% url 'prison:detenus_show' d.pk %}">{{ d.matricule }}</a></td>
-                        <td>{{ d.full_name }}</td>
+                        <td><div class="d-flex align-items-center gap-2">{% include 'partials/detenu_avatar.html' with detenu=d %}<span>{{ d.full_name }}</span></div></td>
                         <td><span class="badge {{ d.badge_statut }}">{{ d.get_statut_judiciaire_display }}</span></td>
                         <td>{{ d.cellule.code_cellule|default:"—" }}</td>
                     </tr>
@@ -102,12 +121,13 @@
     </div>
     <div class="col-lg-5">
         <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header bg-white border-0 pt-3"><h2 class="h6 fw-bold mb-0">Journal récent</h2></div>
+            <div class="card-header bg-white border-0 pt-3"><h2 class="h6 fw-bold mb-0">Activité récente <span class="text-muted fw-normal small">· {{ visitesToday }} visite(s) aujourd'hui</span></h2></div>
             <ul class="list-group list-group-flush">
                 {% for log in recent_logs %}
                 <li class="list-group-item small">
                     <strong>{{ log.action }}</strong> <span class="text-muted">{{ log.module }}</span><br>
-                    <span class="text-muted">{{ log.description|truncatechars:80 }}</span>
+                    <span class="text-muted">{{ log.description|truncatechars:80 }}</span><br>
+                    <time class="activity-time">{{ log.created_at|date:"d/m/Y H:i" }}</time>
                 </li>
                 {% empty %}
                 <li class="list-group-item text-muted">Aucune activité</li>
@@ -116,23 +136,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script>
-const statutLabels = {{ chart_statut_labels|safe }};
-const statutValues = {{ chart_statut_values|safe }};
-const dangerLabels = {{ chart_danger_labels|safe }};
-const dangerValues = {{ chart_danger_values|safe }};
-new Chart(document.getElementById('chartStatut'), {
-    type: 'doughnut',
-    data: { labels: statutLabels, datasets: [{ data: statutValues, backgroundColor: ['#F59E0B','#EF4444','#06B6D4','#10B981','#334155','#94A3B8'] }] },
-    options: { plugins: { legend: { position: 'bottom' } } }
-});
-new Chart(document.getElementById('chartDanger'), {
-    type: 'bar',
-    data: { labels: dangerLabels, datasets: [{ label: 'Effectif', data: dangerValues, backgroundColor: '#2563EB' }] },
-    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
-});
-</script>
 {% endblock %}

@@ -1,53 +1,55 @@
 {% extends 'base.html' %}
 {% block title %}Documents — {{ APP_NAME }}{% endblock %}
 {% block content %}
-<div class="row g-4">
-    <div class="col-lg-7">
-        <h1 class="h3 fw-bold font-outfit mb-3">Dossiers Judiciaires</h1>
+<div class="page-header">
+    <div><h1 class="h3 fw-bold font-outfit mb-1">Dossiers judiciaires</h1><p class="text-muted mb-0">Mandats, jugements et pièces du dossier · {{ page_obj.paginator.count }} document(s)</p></div>
+    {% if user.can_write_detenus %}<a href="#documentUpload" class="btn btn-outline-primary"><i class="bi bi-cloud-arrow-up me-1" aria-hidden="true"></i> Ajouter un document</a>{% endif %}
+</div>
         <div class="card border-0 shadow-sm rounded-4">
             <div class="table-responsive">
-                <table class="table mb-0 align-middle">
-                    <thead><tr><th>Titre</th><th>Type</th><th>Détenu</th><th>Taille</th><th></th></tr></thead>
+                <table class="table table-hover mb-0 align-middle">
+                    <caption class="visually-hidden">Documents judiciaires et liens de téléchargement</caption>
+                    <thead><tr><th scope="col">Document</th><th scope="col">Détenu</th><th scope="col">Ajout</th><th scope="col">Taille</th><th scope="col">Numérisé par</th><th scope="col">Fichier</th></tr></thead>
                     <tbody>
                     {% for doc in documents %}
                     <tr>
-                        <td>{{ doc.titre }}</td>
-                        <td class="small">{{ doc.get_type_doc_display }}</td>
-                        <td><a href="{% url 'prison:detenus_show' doc.detenu_id %}">{{ doc.detenu.matricule }}</a></td>
-                        <td class="small">{{ doc.taille_ko }} Ko</td>
-                        <td><a href="{% url 'core:media_document' doc.fichier_path %}" class="btn btn-sm btn-outline-primary">Télécharger</a></td>
+                        <td><div class="fw-semibold">{{ doc.titre }}</div><div class="small text-muted">{{ doc.get_type_doc_display }}</div></td>
+                        <td><a href="{% url 'prison:detenus_show' doc.detenu_id %}">{{ doc.detenu.full_name }}</a><div class="small text-muted">{{ doc.detenu.matricule }}</div></td>
+                        <td class="small text-nowrap">{{ doc.created_at|date:"d/m/Y" }}</td>
+                        <td class="small text-nowrap">{{ doc.taille_ko }} Ko</td>
+                        <td class="small">{{ doc.uploade_par.full_name|default:"—" }}</td>
+                        <td><a href="{% url 'core:media_document' doc.fichier_path %}" class="btn btn-sm btn-outline-primary" aria-label="Télécharger {{ doc.titre }}"><i class="bi bi-download me-1" aria-hidden="true"></i> Télécharger</a></td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="5" class="text-center text-muted py-4">Aucun document</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-5"><i class="bi bi-folder2-open d-block fs-3 mb-2" aria-hidden="true"></i>Aucun document enregistré.</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
-    </div>
+{% include 'partials/pagination.html' %}
     {% if user.can_write_detenus %}
-    <div class="col-lg-5">
-        <div class="card border-0 shadow-sm p-4 rounded-4">
-            <h2 class="h5 fw-bold mb-3">Uploader un document</h2>
-            <form method="post" action="{% url 'prison:documents_store' %}" enctype="multipart/form-data">
+        <details class="card border-0 shadow-sm p-4 rounded-4 mt-4" id="documentUpload">
+            <summary class="fw-semibold"><i class="bi bi-cloud-arrow-up text-primary me-2" aria-hidden="true"></i>Ajouter une pièce au dossier d'un détenu</summary>
+            <form method="post" action="{% url 'prison:documents_store' %}" enctype="multipart/form-data" class="mt-4">
                 {% csrf_token %}
-                <div class="mb-3">
-                    <label class="form-label">Détenu *</label>
-                    <select name="detenu_id" class="form-select" required>
+                <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="docDetenu">Détenu *</label>
+                    <select name="detenu_id" id="docDetenu" class="form-select" required>
                         <option value="">— Sélectionner —</option>
                         {% for d in detenus %}<option value="{{ d.id }}">{{ d.matricule }} — {{ d.full_name }}</option>{% endfor %}
                     </select>
                 </div>
-                <div class="mb-3"><label class="form-label">Titre *</label><input name="titre" class="form-control" required></div>
-                <div class="mb-3"><label class="form-label">Type</label>
-                    <select name="type_doc" class="form-select">{% for v,l in doc_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+                <div class="col-md-6"><label class="form-label" for="docTitle">Titre *</label><input name="titre" id="docTitle" class="form-control" required></div>
+                <div class="col-md-6"><label class="form-label" for="docType">Type de pièce</label>
+                    <select name="type_doc" id="docType" class="form-select">{% for v,l in doc_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
                 </div>
-                <div class="mb-3"><label class="form-label">Fichier *</label><input type="file" name="fichier" class="form-control" required></div>
-                <div class="mb-3"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="2"></textarea></div>
-                <button class="btn btn-primary w-100">Enregistrer</button>
+                <div class="col-md-6"><label class="form-label" for="docFile">Fichier *</label><input type="file" name="fichier" id="docFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required><div class="form-text">PDF, image ou document Word.</div></div>
+                <div class="col-12"><label class="form-label" for="docDescription">Description</label><textarea name="description" id="docDescription" class="form-control" rows="2"></textarea></div>
+                </div>
+                <button class="btn btn-primary mt-3">Enregistrer le document</button>
             </form>
-        </div>
-    </div>
+        </details>
     {% endif %}
-</div>
 {% endblock %}

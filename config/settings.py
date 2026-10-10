@@ -19,6 +19,7 @@ IS_DEPLOYED = IS_VERCEL or IS_RENDER
 
 SECRET_KEY = env('SECRET_KEY', default='dev-sgp-makala-insecure-change-me')
 DEBUG = env.bool('DEBUG', default=not IS_DEPLOYED)
+DEMO_MODE = env.bool('DEMO_MODE', default=IS_RENDER)
 _default_allowed_hosts = ['localhost', '127.0.0.1', 'testserver']
 if IS_VERCEL:
     _default_allowed_hosts.append('.vercel.app')
@@ -76,7 +77,8 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': str(BASE_DIR / 'db.sqlite3'),
+        'NAME': env('SQLITE_PATH', default=str(BASE_DIR / 'db.sqlite3')),
+        'OPTIONS': {'timeout': 30},
     }
 }
 
@@ -141,6 +143,7 @@ if IS_DEPLOYED:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    SECURE_REDIRECT_EXEMPT = [r'^health/$']
 
 # Bootstrap admin from env
 SGP_ADMIN_EMAIL = env('SGP_ADMIN_EMAIL', default='admin@makala.cd')
