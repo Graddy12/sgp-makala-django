@@ -5,8 +5,23 @@
    ============================================================================== */
 
 /* --------------------------------------------------------------------------
-   1. IMPORT GOOGLE FONTS (fallback si la balise head n'a pas chargé)
+   1. POLICES LOCALES
    -------------------------------------------------------------------------- */
+@font-face {
+    font-family: 'Inter';
+    src: url('../vendor/fonts/Inter-Variable.ttf') format('truetype');
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Outfit';
+    src: url('../vendor/fonts/Outfit-Variable.ttf') format('truetype');
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+}
 
 /* --------------------------------------------------------------------------
    2. VARIABLES GLOBALES – DESIGN TOKENS
@@ -716,6 +731,18 @@ details > summary { cursor: pointer; }
     .navbar-actions .navbar-role { margin-left: auto; max-width: calc(100% - 100px); white-space: normal; line-height: 1.3; text-align: center; }
     .navbar-icon-button { width: 38px; height: 38px; font-size: 1.25rem; }
     .navbar-search { grid-column: 1; grid-row: 3; }
+    .navbar-notifications { position: static; }
+    .navbar-notifications .notification-panel {
+        top: 100% !important;
+        right: .8rem !important;
+        bottom: auto !important;
+        left: auto !important;
+        transform: none !important;
+        width: min(360px, calc(100vw - 1.6rem));
+        max-height: calc(100dvh - 200px);
+        overflow-y: auto;
+    }
+    .navbar-notifications .notification-list { max-height: none; overflow-y: visible; }
 }
 
 /* Shared surfaces and Bootstrap utilities follow the selected theme. */
